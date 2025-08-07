@@ -25,7 +25,7 @@ class WidgetTree extends StatelessWidget {
       return
       Scaffold(
       appBar: AppBar(
-        title: Text('Terminal Salto-Libre'),
+        title: Text('Terminal Salto Libre'),
         centerTitle: true,
         actions: [
          ValueListenableBuilder(valueListenable: darkMode, builder: (context, valemia, child) {

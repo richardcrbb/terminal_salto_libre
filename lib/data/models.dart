@@ -7,7 +7,9 @@ class JumpLog {
   final String equipment;
   final int altitude;
   final int freefallDelay;
-  final int totalFreefall;
+  final int? totalFreefall;
+  final String jumpType;
+  final int? weight;
   final String description;
   final String signature;
 
@@ -20,7 +22,9 @@ class JumpLog {
     required this.equipment,
     required this.altitude,
     required this.freefallDelay,
-    required this.totalFreefall,
+    required this.jumpType,
+    this.weight,
+    this.totalFreefall,
     required this.description,
     required this.signature,
   });
@@ -36,6 +40,8 @@ class JumpLog {
       'altitude': altitude,
       'freefallDelay': freefallDelay,
       'totalFreefall': totalFreefall,
+      'jumpType': jumpType,
+      'weight': weight,
       'description': description,
       'signature': signature,
     };
@@ -52,6 +58,8 @@ class JumpLog {
       altitude: map['altitude'],
       freefallDelay: map['freefallDelay'],
       totalFreefall: map['totalFreefall'],
+      jumpType: map['jumpType'],
+      weight: map['weight'],
       description: map['description'],
       signature: map['signature'],
     );
