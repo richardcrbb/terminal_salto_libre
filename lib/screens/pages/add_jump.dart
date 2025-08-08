@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:terminal_salto_libre/data/models.dart';
 import 'package:intl/intl.dart';
+import 'package:terminal_salto_libre/data/logbook_db.dart';
 
 class AddJumpForm extends StatefulWidget {
   final void Function(JumpLog) onSave;
@@ -8,6 +9,7 @@ class AddJumpForm extends StatefulWidget {
 
   @override
   State<AddJumpForm> createState() => _AddJumpFormState();
+
 }
 
 class _AddJumpFormState extends State<AddJumpForm> {
@@ -64,6 +66,19 @@ class _AddJumpFormState extends State<AddJumpForm> {
     }
   }
 
+  @override
+  void initState() {
+    super.initState();
+    _loadNextJumpNumber(); 
+  }
+
+  Future<void> _loadNextJumpNumber() async {
+  final lastNumber = await JumpLogDatabase.getLastJumpNumber();
+  setState(() {
+    _jumpNumberController.text = (lastNumber + 1).toString();
+  });
+}
+
   void _saveForm() {
     if (_formKey.currentState!.validate()) {
       final newJump = JumpLog(
@@ -107,7 +122,8 @@ class _AddJumpFormState extends State<AddJumpForm> {
             children: [
               TextFormField(
                 controller: _jumpNumberController,
-                keyboardType: TextInputType.number,
+                readOnly: true,
+                //keyboardType: TextInputType.number,
                 decoration: const InputDecoration(labelText: 'Número de salto'),
                 validator: (value) => value!.isEmpty ? 'Requerido' : null,
               ),
