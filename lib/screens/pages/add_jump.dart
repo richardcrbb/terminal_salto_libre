@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:terminal_salto_libre/data/models.dart';
 import 'package:intl/intl.dart';
-import 'package:terminal_salto_libre/data/logbook_db.dart';
+import 'package:terminal_salto_libre/data/notifiers.dart';
+import 'package:terminal_salto_libre/data/shared_functions.dart';
 
 class AddJumpForm extends StatefulWidget {
   final void Function(JumpLog) onSave;
@@ -9,7 +10,6 @@ class AddJumpForm extends StatefulWidget {
 
   @override
   State<AddJumpForm> createState() => _AddJumpFormState();
-
 }
 
 class _AddJumpFormState extends State<AddJumpForm> {
@@ -23,17 +23,42 @@ class _AddJumpFormState extends State<AddJumpForm> {
   final _equipmentController = TextEditingController(text: "Sigma-340");
   final _altitudeController = TextEditingController(text: "8500");
   final _freefallDelayController = TextEditingController(text: "25");
+  final _totalFreefallController = TextEditingController();
+  final _totalFreefallControllerEdited = TextEditingController();
   final ValueNotifier<String> _jumpTypeNotifier = ValueNotifier('Tandem');
   final _weightController = TextEditingController(text: '80');
-  final List<String> _jumpTypeList = [
+  final _ageController = TextEditingController();
+  /*final List<String> _jumpTypeList = [
     'Tandem',
     'AFF',
     'Camera',
     'Coach',
     'Fun Jump',
-  ];
+  ];*/
   final _descriptionController = TextEditingController(text: "Tandem con ");
   final _signatureController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+
+    _actualizarTotalFreefall();
+
+    _freefallDelayController.addListener(() {
+      _actualizarTotalFreefall();
+    });
+  }
+
+  void _actualizarTotalFreefall() {
+    final delay = int.tryParse(_freefallDelayController.text) ?? 0;
+    final totalSegundos = lastTotalFreefallNotifier.value + delay;
+
+    // Guardar segundos puros (para DB)
+    _totalFreefallController.text = totalSegundos.toString();
+
+    // Guardar tiempo formateado
+    _totalFreefallControllerEdited.text = formatSecondsToHHMMSS(totalSegundos);
+  }
 
   @override
   void dispose() {
@@ -44,10 +69,13 @@ class _AddJumpFormState extends State<AddJumpForm> {
     _equipmentController.dispose();
     _altitudeController.dispose();
     _freefallDelayController.dispose();
+    _totalFreefallController.dispose();
+    _totalFreefallControllerEdited.dispose();
     _descriptionController.dispose();
     _signatureController.dispose();
     _jumpTypeNotifier.dispose();
     _weightController.dispose();
+    _ageController.dispose();
     super.dispose();
   }
 
@@ -66,19 +94,6 @@ class _AddJumpFormState extends State<AddJumpForm> {
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _loadNextJumpNumber(); 
-  }
-
-  Future<void> _loadNextJumpNumber() async {
-  final lastNumber = await JumpLogDatabase.getLastJumpNumber();
-  setState(() {
-    _jumpNumberController.text = (lastNumber + 1).toString();
-  });
-}
-
   void _saveForm() {
     if (_formKey.currentState!.validate()) {
       final newJump = JumpLog(
@@ -89,14 +104,17 @@ class _AddJumpFormState extends State<AddJumpForm> {
         equipment: _equipmentController.text,
         altitude: int.parse(_altitudeController.text),
         freefallDelay: int.parse(_freefallDelayController.text),
+        totalFreefall: int.parse(_totalFreefallController.text),
         jumpType: _jumpTypeNotifier.value,
+        weight: int.tryParse(_weightController.text),
+        age: int.tryParse(_ageController.text),
         description: _descriptionController.text,
         signature: _signatureController.text,
       );
 
       widget.onSave(newJump);
 
-       Navigator.pop(context);
+      Navigator.pop(context);
     }
   }
 
@@ -120,12 +138,22 @@ class _AddJumpFormState extends State<AddJumpForm> {
           key: _formKey,
           child: ListView(
             children: [
-              TextFormField(
-                controller: _jumpNumberController,
-                readOnly: true,
-                //keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Número de salto'),
-                validator: (value) => value!.isEmpty ? 'Requerido' : null,
+              ValueListenableBuilder<int>(
+                valueListenable: lastJumpNumberNotifier,
+                builder:
+                    (BuildContext context, int ultimoSalto, Widget? child) {
+                      _jumpNumberController.text = (ultimoSalto + 1).toString();
+                      return TextFormField(
+                        controller: _jumpNumberController,
+                        readOnly: true,
+                        //keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'Número de salto',
+                        ),
+                        validator: (value) =>
+                            value!.isEmpty ? 'Requerido' : null,
+                      );
+                    },
               ),
               TextFormField(
                 controller: _dateController,
@@ -162,6 +190,15 @@ class _AddJumpFormState extends State<AddJumpForm> {
                   labelText: 'Retardo (segundos)',
                 ),
               ),
+              TextFormField(
+                controller: _totalFreefallControllerEdited,
+                readOnly: true,
+                //keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Tiempo Total de Caida Libre',
+                ),
+                validator: (value) => value!.isEmpty ? 'Requerido' : null,
+              ),
               ValueListenableBuilder(
                 valueListenable: _jumpTypeNotifier,
                 builder: (BuildContext context, String jumpT, Widget? child) {
@@ -170,9 +207,9 @@ class _AddJumpFormState extends State<AddJumpForm> {
                     onChanged: (newValue) {
                       _jumpTypeNotifier.value = newValue!;
                     },
-                    items: _jumpTypeList.map((String item) {
-                      return DropdownMenuItem(value: item ,child: Text(item),);
-                    },).toList(),
+                    items: jumpTypeList.map((String item) {
+                      return DropdownMenuItem(value: item, child: Text(item));
+                    }).toList(),
                     decoration: InputDecoration(labelText: 'Jump Type'),
                   );
                 },
@@ -181,6 +218,11 @@ class _AddJumpFormState extends State<AddJumpForm> {
                 controller: _weightController,
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(labelText: 'Peso'),
+              ),
+              TextFormField(
+                controller: _ageController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: 'Edad'),
               ),
               TextFormField(
                 controller: _descriptionController,

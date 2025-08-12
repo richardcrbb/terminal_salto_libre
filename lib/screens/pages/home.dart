@@ -1,25 +1,118 @@
 import 'package:flutter/material.dart';
 import 'package:terminal_salto_libre/data/logbook_db.dart';
+import 'package:terminal_salto_libre/data/models.dart';
+import 'package:terminal_salto_libre/data/shared_functions.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
   @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  late Future<Map<String, dynamic>> _dataFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _dataFuture = _loadData();
+  }
+
+  Future<Map<String, dynamic>> _loadData() async {
+    final jumps = await JumpLogDatabase.getJumpsWithLastDate();
+    final counts = await JumpLogDatabase.getJumpTypeCounts();
+
+    int lastJumpNumber = 0;
+    int totalFreefall = 0;
+
+    if (jumps.isNotEmpty) {
+      lastJumpNumber = jumps.first.jumpNumber; // último número de salto
+      totalFreefall = jumps.first.totalFreefall ?? 0; // último total freefall
+    }
+
+    return {
+      'jumps': jumps,
+      'lastJumpNumber': lastJumpNumber,
+      'totalFreefall': totalFreefall,
+      'counts': counts,
+    };
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return 
-    FutureBuilder<int>(
-      future: JumpLogDatabase.getLastJumpNumber(),
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _dataFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const CircularProgressIndicator();
+          return const Center(child: CircularProgressIndicator());
         } else if (snapshot.hasError) {
-          return const Text('Error al cargar los saltos');
-        } else {
-          final lastJumpNumber = snapshot.data ?? 0;
+          return const Center(child: Text('Error al cargar los datos'));
+        }
+
+        final data = snapshot.data!;
+        final jumps = data['jumps'] as List<JumpLog>;
+        final lastJumpNumber = data['lastJumpNumber'] as int;
+        final totalFreefall = data['totalFreefall'] as int;
+        final sobrecuposDelDia = jumps
+            .where((jump) => (jump.weight ?? 0) > 85)
+            .toList();
+        final counts = data['counts'] as Map<String, int>;
+
         return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Text('Numero de Saltos $lastJumpNumber'),
-      ],
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text('Número de saltos: $lastJumpNumber'),
+            Text(
+              "Total de caída libre: ${formatSecondsToHHMMSS(totalFreefall)}",
+            ),
+            const SizedBox(height: 10),
+            Text('Resumen del último día', style: titulo),
+            const SizedBox(height: 10),
+            Text('Saltos del día ${jumps.length}', style: titulo),
+            const SizedBox(height: 10),
+            Text('Sobrecupos ${sobrecuposDelDia.length}', style: titulo),
+            const SizedBox(height: 10),
+            Expanded(
+              child: ListView.builder(
+                itemCount: counts.length,
+                itemBuilder: (context, index) {
+                  // Convertimos el Map a una lista de entradas
+                  final entry = counts.entries.elementAt(index);
+                  final tipo = entry.key;
+                  final cantidad = entry.value;
+
+                  return ListTile(
+                    leading: Text(tipo), // clave del mapa
+                    trailing: Text(cantidad.toString()), // valor del mapa
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 10),
+            Expanded(
+              child: jumps.isEmpty
+                  ? const Center(
+                      child: Text('No hay saltos en la última fecha'),
+                    )
+                  : ListView.builder(
+                      itemCount: jumps.length,
+                      itemBuilder: (context, index) {
+                        final jump = jumps[index];
+                        return ListTile(
+                          leading: Text('#${jump.jumpNumber}'),
+                          title: Text(jump.location),
+                          subtitle: Text(
+                            'Altitud: ${jump.altitude} - Delay: ${jump.freefallDelay}s',
+                          ),
+                          trailing: Text(jump.date),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        );
+      },
     );
-  }},);}}
+  }
+}

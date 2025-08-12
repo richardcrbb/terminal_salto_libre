@@ -1,3 +1,5 @@
+import 'package:flutter/widgets.dart';
+
 class JumpLog {
   final int? id;
   final int jumpNumber;
@@ -10,6 +12,7 @@ class JumpLog {
   final int? totalFreefall;
   final String jumpType;
   final int? weight;
+  final int? age;
   final String description;
   final String signature;
 
@@ -24,6 +27,7 @@ class JumpLog {
     required this.freefallDelay,
     required this.jumpType,
     this.weight,
+    this.age,
     this.totalFreefall,
     required this.description,
     required this.signature,
@@ -42,6 +46,7 @@ class JumpLog {
       'totalFreefall': totalFreefall,
       'jumpType': jumpType,
       'weight': weight,
+      'age' : age,
       'description': description,
       'signature': signature,
     };
@@ -60,8 +65,19 @@ class JumpLog {
       totalFreefall: map['totalFreefall'],
       jumpType: map['jumpType'],
       weight: map['weight'],
+      age : map['age'],
       description: map['description'],
       signature: map['signature'],
     );
   }
 }
+
+const TextStyle titulo = TextStyle(fontWeight: FontWeight.bold, fontSize: 30.0);
+
+const List<String> jumpTypeList = [
+  'Tandem',
+  'AFF',
+  'Camera',
+  'Coach',
+  'Fun Jump',
+];

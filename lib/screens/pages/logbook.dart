@@ -55,7 +55,7 @@ class _LogbookPageState extends State<LogbookPage> {
                         '${jump.jumpType} en ${jump.location} el ${jump.date} ',
                       ),
                       subtitle: Text(
-                        '${jump.aircraft}, ${jump.altitude} FT, ${jump.equipment}, ${jump.description}',
+                        '${jump.aircraft}, ${jump.altitude} FT, ${jump.equipment}, ${jump.description}, ${jump.age} años, ${jump.weight} kg, ${jump.signature}',
                       ),
                       onTap: () {
                         // Puedes navegar a una pantalla de detalle o edición si deseas
