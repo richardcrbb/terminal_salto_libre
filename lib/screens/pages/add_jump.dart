@@ -6,7 +6,8 @@ import 'package:terminal_salto_libre/data/shared_functions.dart';
 
 class AddJumpForm extends StatefulWidget {
   final void Function(JumpLog) onSave;
-  const AddJumpForm({super.key, required this.onSave});
+  final JumpLog? existingJump;
+  const AddJumpForm({super.key, required this.onSave,this.existingJump,});
 
   @override
   State<AddJumpForm> createState() => _AddJumpFormState();
@@ -28,19 +29,41 @@ class _AddJumpFormState extends State<AddJumpForm> {
   final ValueNotifier<String> _jumpTypeNotifier = ValueNotifier('Tandem');
   final _weightController = TextEditingController(text: '80');
   final _ageController = TextEditingController();
-  /*final List<String> _jumpTypeList = [
-    'Tandem',
-    'AFF',
-    'Camera',
-    'Coach',
-    'Fun Jump',
-  ];*/
   final _descriptionController = TextEditingController(text: "Tandem con ");
   final _signatureController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
+
+    if (widget.existingJump != null) {
+    final jump = widget.existingJump!;
+    _jumpNumberController.text = jump.jumpNumber.toString();
+    _dateController.text = jump.date; // Asegúrate que el formato coincida
+    _locationController.text = jump.location;
+    _aircraftController.text = jump.aircraft;
+    _equipmentController.text = jump.equipment;
+    _altitudeController.text = jump.altitude.toString();
+    _freefallDelayController.text = jump.freefallDelay.toString();
+    _totalFreefallController.text = jump.totalFreefall.toString();
+    _totalFreefallControllerEdited.text = formatSecondsToHHMMSS(jump.totalFreefall!);
+    _jumpTypeNotifier.value = jump.jumpType;
+    _weightController.text = jump.weight?.toString() ?? '';
+    _ageController.text = jump.age?.toString() ?? '';
+    _descriptionController.text = jump.description;
+    _signatureController.text = jump.signature;
+  } else {
+    // Valores por defecto (como tenías antes)
+    _dateController.text = DateFormat('dd-MMM-yy').format(DateTime.now());
+    _locationController.text = "Cali";
+    _aircraftController.text = "PA-32";
+    _equipmentController.text = "Sigma-340";
+    _altitudeController.text = "8500";
+    _freefallDelayController.text = "25";
+    _weightController.text = "80";
+    _descriptionController.text = "Tandem con ";
+    _jumpTypeNotifier.value = 'Tandem';
+  }
 
     _actualizarTotalFreefall();
 
@@ -97,6 +120,7 @@ class _AddJumpFormState extends State<AddJumpForm> {
   void _saveForm() {
     if (_formKey.currentState!.validate()) {
       final newJump = JumpLog(
+        id: widget.existingJump?.id,
         jumpNumber: int.parse(_jumpNumberController.text),
         date: _dateController.text,
         location: _locationController.text,
@@ -142,7 +166,7 @@ class _AddJumpFormState extends State<AddJumpForm> {
                 valueListenable: lastJumpNumberNotifier,
                 builder:
                     (BuildContext context, int ultimoSalto, Widget? child) {
-                      _jumpNumberController.text = (ultimoSalto + 1).toString();
+                       if (widget.existingJump == null){_jumpNumberController.text = (ultimoSalto + 1).toString();} // asignar numero solo si no estamos editando
                       return TextFormField(
                         controller: _jumpNumberController,
                         readOnly: true,

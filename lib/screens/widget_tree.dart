@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:terminal_salto_libre/data/notifiers.dart';
 import 'package:terminal_salto_libre/screens/pages/altimeter.dart';
-import 'package:terminal_salto_libre/screens/pages/config.dart';
+import 'package:terminal_salto_libre/screens/pages/settings.dart';
 import 'package:terminal_salto_libre/screens/pages/glidepath.dart';
 import 'package:terminal_salto_libre/screens/pages/home.dart';
 import 'package:terminal_salto_libre/screens/pages/logbook.dart';
@@ -11,7 +11,7 @@ List<Widget> pages =[
   AltimeterPage(),
   LogbookPage(),
   GlidePathPage(),
-  ConfigPage(),
+  SettingsPage(),
 ];
 
 var icono = Icon(Icons.light_mode_outlined);

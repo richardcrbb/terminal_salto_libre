@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:terminal_salto_libre/data/logbook_db.dart';
 import 'package:terminal_salto_libre/data/models.dart';
 import 'package:terminal_salto_libre/data/shared_functions.dart';
-
+import 'package:terminal_salto_libre/data/notifiers.dart';
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -23,18 +23,16 @@ class _HomePageState extends State<HomePage> {
     final jumps = await JumpLogDatabase.getJumpsWithLastDate();
     final counts = await JumpLogDatabase.getJumpTypeCounts();
 
-    int lastJumpNumber = 0;
-    int totalFreefall = 0;
+    //actualizamos los notifiers
 
     if (jumps.isNotEmpty) {
-      lastJumpNumber = jumps.first.jumpNumber; // último número de salto
-      totalFreefall = jumps.first.totalFreefall ?? 0; // último total freefall
+      lastJumpNumberNotifier.value = jumps.first.jumpNumber; // último número de salto
+      lastTotalFreefallNotifier.value = jumps.first.totalFreefall ?? 0; // último total freefall
     }
 
+    
     return {
       'jumps': jumps,
-      'lastJumpNumber': lastJumpNumber,
-      'totalFreefall': totalFreefall,
       'counts': counts,
     };
   }
@@ -52,8 +50,6 @@ class _HomePageState extends State<HomePage> {
 
         final data = snapshot.data!;
         final jumps = data['jumps'] as List<JumpLog>;
-        final lastJumpNumber = data['lastJumpNumber'] as int;
-        final totalFreefall = data['totalFreefall'] as int;
         final sobrecuposDelDia = jumps
             .where((jump) => (jump.weight ?? 0) > 85)
             .toList();
@@ -62,16 +58,53 @@ class _HomePageState extends State<HomePage> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Text('Número de saltos: $lastJumpNumber'),
+            Text('Número de saltos: ${lastJumpNumberNotifier.value}'),
             Text(
-              "Total de caída libre: ${formatSecondsToHHMMSS(totalFreefall)}",
+              "Total de caída libre: ${formatSecondsToHHMMSS(lastTotalFreefallNotifier.value)}",
             ),
             const SizedBox(height: 10),
             Text('Resumen del último día', style: titulo),
             const SizedBox(height: 10),
-            Text('Saltos del día ${jumps.length}', style: titulo),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  SizedBox(width: 100,child: Text('Saltos del día ')), CircleAvatar(child: Text('${jumps.length}'),)
+                  ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  SizedBox(width: 100,child: Text('Sobrecupos ')), CircleAvatar(child: Text('${sobrecuposDelDia.length}'),)
+                ],
+              ),
+            ),
             const SizedBox(height: 10),
-            Text('Sobrecupos ${sobrecuposDelDia.length}', style: titulo),
+            Expanded(
+              flex: 2,
+              child: jumps.isEmpty
+                  ? const Center(
+                      child: Text('No hay saltos en la última fecha'),
+                    )
+                  : ListView.builder(
+                      itemCount: jumps.length,
+                      itemBuilder: (context, index) {
+                        final jump = jumps[index];
+                        return ListTile(
+                          leading: Text('#${index+1}'),
+                          title: Text(jump.location),
+                          subtitle: Text(
+                            '${jump.weight} kg - ${jump.age} años - con ${jump.signature}',
+                          ),
+                          trailing: Text(jump.date),
+                        );
+                      },
+                    ),
+            ),
             const SizedBox(height: 10),
             Expanded(
               child: ListView.builder(
@@ -84,31 +117,12 @@ class _HomePageState extends State<HomePage> {
 
                   return ListTile(
                     leading: Text(tipo), // clave del mapa
-                    trailing: Text(cantidad.toString()), // valor del mapa
+                    trailing: CircleAvatar(
+                      child: Text(cantidad.toString()),
+                    ), // valor del mapa
                   );
                 },
               ),
-            ),
-            const SizedBox(height: 10),
-            Expanded(
-              child: jumps.isEmpty
-                  ? const Center(
-                      child: Text('No hay saltos en la última fecha'),
-                    )
-                  : ListView.builder(
-                      itemCount: jumps.length,
-                      itemBuilder: (context, index) {
-                        final jump = jumps[index];
-                        return ListTile(
-                          leading: Text('#${jump.jumpNumber}'),
-                          title: Text(jump.location),
-                          subtitle: Text(
-                            'Altitud: ${jump.altitude} - Delay: ${jump.freefallDelay}s',
-                          ),
-                          trailing: Text(jump.date),
-                        );
-                      },
-                    ),
             ),
           ],
         );

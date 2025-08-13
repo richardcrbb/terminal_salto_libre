@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:terminal_salto_libre/data/logbook_db.dart';
+import 'package:terminal_salto_libre/data/models.dart'; // aquí está JumpLog
 import 'package:terminal_salto_libre/screens/pages/add_jump.dart';
 
 class LogbookPage extends StatefulWidget {
@@ -12,34 +13,46 @@ class LogbookPage extends StatefulWidget {
 class _LogbookPageState extends State<LogbookPage> {
   int _currentPage = 0;
   final int _itemsPerPage = 20;
+  Future<List<JumpLog>>? _jumpsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadJumps();
+  }
+
+  void _loadJumps() {
+    _jumpsFuture = JumpLogDatabase.getJumps();
+  }
+
+  Future<void> _refreshJumps() async {
+    _loadJumps();
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Logbook"), centerTitle: true),
-      body: FutureBuilder(
-        future: JumpLogDatabase.getJumps(),
+      appBar: AppBar(title: const Text("Logbook"), centerTitle: true),
+      body: FutureBuilder<List<JumpLog>>(
+        future: _jumpsFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (!snapshot.hasData ||
-              snapshot
-                  .data!
-                  .isEmpty) /* no has data true significa que es nulo */ {
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return const Center(child: Text('No hay saltos registrados.'));
           }
 
           final jumps = snapshot.data!;
-          final totalPages = (jumps.length / _itemsPerPage).ceil(); //.ceil() redondea hacia arriba, para no perder registros en la última página. 50/20 = 2.5 ~ 3 paginas
+          final totalPages = (jumps.length / _itemsPerPage).ceil();
 
-          // Calcular los índices para los elementos visibles
-          final startIndex = _currentPage * _itemsPerPage; //Si estás en la página 0: startIndex = 0 * 20 = 0, Si estás en la página 2:startIndex = 2 * 20 = 40
-          final endIndex = (_currentPage + 1) * _itemsPerPage; //Si estás en la página 0: endIndex = (0 + 1) * 20 = 20 Si estás en la página 2: endIndex = (2 + 1) * 20 = 60
-          final visibleJumps = jumps.sublist( // hace un listado de a 20 items.
+          final startIndex = _currentPage * _itemsPerPage;
+          final endIndex = (_currentPage + 1) * _itemsPerPage;
+          final visibleJumps = jumps.sublist(
             startIndex,
-            endIndex > jumps.length ? jumps.length : endIndex, // asegura que el ultimo listado sea el restante de items, porque si se pone fijo que 20 y solo quedan 15 lanzaria un error ya que no existen.
+            endIndex > jumps.length ? jumps.length : endIndex,
           );
 
           return Column(
@@ -52,13 +65,64 @@ class _LogbookPageState extends State<LogbookPage> {
                     return ListTile(
                       leading: CircleAvatar(child: Text('${jump.jumpNumber}')),
                       title: Text(
-                        '${jump.jumpType} en ${jump.location} el ${jump.date} ',
+                        '${jump.jumpType} en ${jump.location} el ${jump.date}',
                       ),
                       subtitle: Text(
-                        '${jump.aircraft}, ${jump.altitude} FT, ${jump.equipment}, ${jump.description}, ${jump.age} años, ${jump.weight} kg, ${jump.signature}',
+                        '${jump.aircraft}, ${jump.altitude} FT, ${jump.equipment}, ${jump.description}, ${jump.age ?? ''} años, ${jump.weight ?? ''} kg, ${jump.signature}',
                       ),
                       onTap: () {
-                        // Puedes navegar a una pantalla de detalle o edición si deseas
+                        // Navegar a detalles si quieres
+                      },
+                      onLongPress: () async {
+                        final scaffoldContext = context; // GUARDAR contexto local
+
+                        final action = await showDialog<String>(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: const Text('Acciones'),
+                              content: const Text('¿Qué deseas hacer con este salto?'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context, 'editar'),
+                                  child: const Text('Editar'),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context, 'eliminar'),
+                                  child: const Text('Eliminar'),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+
+                        if (action == null) return;
+                        if (!mounted) return;
+
+                        if (action == 'eliminar') {
+                          await JumpLogDatabase.deleteJump(jump.id!);
+                          if (!mounted) return;
+
+                          ScaffoldMessenger.of(scaffoldContext).showSnackBar(
+                            const SnackBar(content: Text('Salto eliminado')),
+                          );
+
+                          await _refreshJumps();
+                        } else if (action == 'editar') {
+                          if (!mounted) return;
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => AddJumpForm(
+                                existingJump: jump,
+                                onSave: (updatedJump) async {
+                                  await JumpLogDatabase.updateJump(updatedJump);
+                                  await _refreshJumps();
+                                },
+                              ),
+                            ),
+                          );
+                        }
                       },
                     );
                   },
@@ -100,28 +164,28 @@ class _LogbookPageState extends State<LogbookPage> {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
+        onPressed: () async {
+          final scaffoldContext = context; // Guardar contexto local
+
+          await Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) {
                 return AddJumpForm(
                   onSave: (jump) async {
                     try {
-                      await JumpLogDatabase.insertJump(jump);
-                      setState(() {});
-                      // Aquí puedes guardar en base de datos, actualizar estado, etc.
-                      //print("Salto guardado: ${jump.jumpNumber}");
+                      if (jump.id != null) {
+                        await JumpLogDatabase.updateJump(jump);
+                      } else {
+                        await JumpLogDatabase.insertJump(jump);
+                      }
+                      await _refreshJumps();
                     } catch (error) {
-                      // Imprimir el error en consola
-                      debugPrint("Error al guardar el salto: $error");
+                      if (!mounted) return;
 
-                      // Mostrar SnackBar con mensaje de error
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      ScaffoldMessenger.of(scaffoldContext).showSnackBar(
                         SnackBar(
-                          content: Text(
-                            'Ocurrió un error al guardar el salto. $error',
-                          ),
+                          content: Text('Ocurrió un error al guardar el salto. $error'),
                           backgroundColor: Colors.red,
                         ),
                       );
@@ -132,7 +196,7 @@ class _LogbookPageState extends State<LogbookPage> {
             ),
           );
         },
-        child: Icon(Icons.playlist_add_rounded),
+        child: const Icon(Icons.playlist_add_rounded),
       ),
     );
   }
