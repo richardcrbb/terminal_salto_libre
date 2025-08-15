@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:terminal_salto_libre/data/logbook_db.dart';
 import 'package:terminal_salto_libre/data/models.dart'; // aquí está JumpLog
+import 'package:terminal_salto_libre/data/notifiers.dart';
 import 'package:terminal_salto_libre/screens/pages/add_jump.dart';
 
 class LogbookPage extends StatefulWidget {
@@ -74,21 +75,26 @@ class _LogbookPageState extends State<LogbookPage> {
                         // Navegar a detalles si quieres
                       },
                       onLongPress: () async {
-                        final scaffoldContext = context; // GUARDAR contexto local
+                        final scaffoldContext =
+                            context; // GUARDAR contexto local
 
                         final action = await showDialog<String>(
                           context: context,
                           builder: (BuildContext context) {
                             return AlertDialog(
                               title: const Text('Acciones'),
-                              content: const Text('¿Qué deseas hacer con este salto?'),
+                              content: const Text(
+                                '¿Qué deseas hacer con este salto?',
+                              ),
                               actions: [
                                 TextButton(
-                                  onPressed: () => Navigator.pop(context, 'editar'),
+                                  onPressed: () =>
+                                      Navigator.pop(context, 'editar'),
                                   child: const Text('Editar'),
                                 ),
                                 TextButton(
-                                  onPressed: () => Navigator.pop(context, 'eliminar'),
+                                  onPressed: () =>
+                                      Navigator.pop(context, 'eliminar'),
                                   child: const Text('Eliminar'),
                                 ),
                               ],
@@ -100,11 +106,11 @@ class _LogbookPageState extends State<LogbookPage> {
                         if (!mounted) return;
 
                         if (action == 'eliminar') {
-                          await JumpLogDatabase.deleteJump(jump.id!);
+                          await JumpLogDatabase.deleteJumpByNumber(jump.jumpNumber);
                           if (!mounted) return;
 
                           ScaffoldMessenger.of(scaffoldContext).showSnackBar(
-                            const SnackBar(content: Text('Salto eliminado')),
+                            const SnackBar(content: Text('✅ Salto eliminado')),
                           );
 
                           await _refreshJumps();
@@ -175,17 +181,24 @@ class _LogbookPageState extends State<LogbookPage> {
                   onSave: (jump) async {
                     try {
                       if (jump.id != null) {
-                        await JumpLogDatabase.updateJump(jump);
+                        await JumpLogDatabase.updateJumpAndRecalculate(jump);
                       } else {
                         await JumpLogDatabase.insertJump(jump);
                       }
+                      // 🔹 Actualizar el ValueNotifier con el último salto
+                      lastJumpNumberNotifier.value =
+                          await JumpLogDatabase.getLastJumpNumber();
+
+                      // 🔹 Señalar que Home debe recargar
                       await _refreshJumps();
                     } catch (error) {
                       if (!mounted) return;
 
                       ScaffoldMessenger.of(scaffoldContext).showSnackBar(
                         SnackBar(
-                          content: Text('Ocurrió un error al guardar el salto. $error'),
+                          content: Text(
+                            '❌ Ocurrió un error al guardar el salto. $error',
+                          ),
                           backgroundColor: Colors.red,
                         ),
                       );

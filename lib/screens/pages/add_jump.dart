@@ -7,7 +7,7 @@ import 'package:terminal_salto_libre/data/shared_functions.dart';
 class AddJumpForm extends StatefulWidget {
   final void Function(JumpLog) onSave;
   final JumpLog? existingJump;
-  const AddJumpForm({super.key, required this.onSave,this.existingJump,});
+  const AddJumpForm({super.key, required this.onSave, this.existingJump});
 
   @override
   State<AddJumpForm> createState() => _AddJumpFormState();
@@ -15,10 +15,17 @@ class AddJumpForm extends StatefulWidget {
 
 class _AddJumpFormState extends State<AddJumpForm> {
   final _formKey = GlobalKey<FormState>();
+
+  // Variable interna para manejar fecha real
+  DateTime _selectedDate = DateTime.now();
+  final _dateFormat = DateFormat('dd-MMM-yyyy'); // formato para mostrar mis fechas
+
+  // Variable para saber si esta inicializando la pagina de edicion:
+  bool _inicializando = true;
+
+  //controladores
   final _jumpNumberController = TextEditingController();
-  final _dateController = TextEditingController(
-    text: DateFormat('dd-MMM-yy').format(DateTime.now()),
-  );
+  final _dateController = TextEditingController();
   final _locationController = TextEditingController(text: "Cali");
   final _aircraftController = TextEditingController(text: "PA-32");
   final _equipmentController = TextEditingController(text: "Sigma-340");
@@ -36,52 +43,89 @@ class _AddJumpFormState extends State<AddJumpForm> {
   void initState() {
     super.initState();
 
+    //Controladores iniciales si es un salto existente
     if (widget.existingJump != null) {
-    final jump = widget.existingJump!;
-    _jumpNumberController.text = jump.jumpNumber.toString();
-    _dateController.text = jump.date; // Asegúrate que el formato coincida
-    _locationController.text = jump.location;
-    _aircraftController.text = jump.aircraft;
-    _equipmentController.text = jump.equipment;
-    _altitudeController.text = jump.altitude.toString();
-    _freefallDelayController.text = jump.freefallDelay.toString();
-    _totalFreefallController.text = jump.totalFreefall.toString();
-    _totalFreefallControllerEdited.text = formatSecondsToHHMMSS(jump.totalFreefall!);
-    _jumpTypeNotifier.value = jump.jumpType;
-    _weightController.text = jump.weight?.toString() ?? '';
-    _ageController.text = jump.age?.toString() ?? '';
-    _descriptionController.text = jump.description;
-    _signatureController.text = jump.signature;
-  } else {
+      
+      _selectedDate = DateTime.parse(widget.existingJump!.date); // guarda fecha 
+    
+      final jump = widget.existingJump!;
+      
+      _jumpNumberController.text = jump.jumpNumber.toString();
+      _dateController.text = _dateFormat.format(_selectedDate);
+      _locationController.text = jump.location;
+      _aircraftController.text = jump.aircraft;
+      _equipmentController.text = jump.equipment;
+      _altitudeController.text = jump.altitude.toString();
+      _freefallDelayController.text = jump.freefallDelay.toString();
+      _totalFreefallController.text = jump.totalFreefall.toString();
+      _totalFreefallControllerEdited.text = formatSecondsToHHMMSS(
+        jump.totalFreefall!,
+      );
+      _jumpTypeNotifier.value = jump.jumpType;
+      _weightController.text = jump.weight?.toString() ?? '';
+      _ageController.text = jump.age?.toString() ?? '';
+      _descriptionController.text = jump.description;
+      _signatureController.text = jump.signature;
+
+      // Listener que solo recalcula si cambia el delay
+      _freefallDelayController.addListener(() {
+         if (_inicializando) return; // ✅ evita recalcular en la carga inicial.
+        _actualizarTotalFreefall(
+          baseHistorica: jump.totalFreefall! - jump.freefallDelay,// argumento de funcion, sirve para mantener base histórica, le resta lo que le habia sumado en la primera insercion del salto
+          delay: int.tryParse(_freefallDelayController.text) ?? 0, //argumento de funcion
+        );
+      });
+
+    } 
+    
     // Valores por defecto (como tenías antes)
-    _dateController.text = DateFormat('dd-MMM-yy').format(DateTime.now());
-    _locationController.text = "Cali";
-    _aircraftController.text = "PA-32";
-    _equipmentController.text = "Sigma-340";
-    _altitudeController.text = "8500";
-    _freefallDelayController.text = "25";
-    _weightController.text = "80";
-    _descriptionController.text = "Tandem con ";
-    _jumpTypeNotifier.value = 'Tandem';
+    else {
+      _dateController.text = _dateFormat.format(_selectedDate);
+      _locationController.text = "Cali";
+      _aircraftController.text = "PA-32";
+      _equipmentController.text = "Sigma-340";
+      _altitudeController.text = "8500";
+      _freefallDelayController.text = "25";
+      _weightController.text = "80";
+      _descriptionController.text = "Tandem con ";
+      _jumpTypeNotifier.value = 'Tandem';
+      
+      
+      _calcularTotalFreefall();
+
+      _freefallDelayController.addListener(() {
+        _calcularTotalFreefall();
+      });
+    }
+
+     
+  _inicializando = false; // ✅ Terminó de inicializar: ahora sí permite recalcular si hay cambios
+    
   }
 
-    _actualizarTotalFreefall();
-
-    _freefallDelayController.addListener(() {
-      _actualizarTotalFreefall();
-    });
-  }
-
-  void _actualizarTotalFreefall() {
+  //funcion para calcular totalfreefall en registro nuevo
+  void _calcularTotalFreefall() {
     final delay = int.tryParse(_freefallDelayController.text) ?? 0;
     final totalSegundos = lastTotalFreefallNotifier.value + delay;
 
     // Guardar segundos puros (para DB)
     _totalFreefallController.text = totalSegundos.toString();
 
-    // Guardar tiempo formateado
+    // Mostrar tiempo formateado
     _totalFreefallControllerEdited.text = formatSecondsToHHMMSS(totalSegundos);
   }
+
+  
+  
+  //funcion para actualizar totalfreefall en registro editado si fuera necesario
+  void _actualizarTotalFreefall({required int baseHistorica, required int delay}) {
+  final totalSegundos = baseHistorica + delay;
+  _totalFreefallController.text = totalSegundos.toString();
+  _totalFreefallControllerEdited.text = formatSecondsToHHMMSS(totalSegundos);
+  }
+
+
+
 
   @override
   void dispose() {
@@ -105,14 +149,15 @@ class _AddJumpFormState extends State<AddJumpForm> {
   Future<void> _selectDate() async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
+      initialDate: _selectedDate,
       firstDate: DateTime(1990),
       lastDate: DateTime(2100),
     );
 
     if (picked != null) {
       setState(() {
-        _dateController.text = DateFormat('yyyy-MM-dd').format(picked);
+        _selectedDate = picked;
+        _dateController.text = _dateFormat.format(picked);
       });
     }
   }
@@ -122,7 +167,7 @@ class _AddJumpFormState extends State<AddJumpForm> {
       final newJump = JumpLog(
         id: widget.existingJump?.id,
         jumpNumber: int.parse(_jumpNumberController.text),
-        date: _dateController.text,
+        date: _selectedDate.toIso8601String(), // formato seguro para DB
         location: _locationController.text,
         aircraft: _aircraftController.text,
         equipment: _equipmentController.text,
@@ -166,7 +211,10 @@ class _AddJumpFormState extends State<AddJumpForm> {
                 valueListenable: lastJumpNumberNotifier,
                 builder:
                     (BuildContext context, int ultimoSalto, Widget? child) {
-                       if (widget.existingJump == null){_jumpNumberController.text = (ultimoSalto + 1).toString();} // asignar numero solo si no estamos editando
+                      if (widget.existingJump == null) {
+                        _jumpNumberController.text = (ultimoSalto + 1)
+                            .toString();
+                      } // asignar numero solo si no estamos editando
                       return TextFormField(
                         controller: _jumpNumberController,
                         readOnly: true,
@@ -183,7 +231,7 @@ class _AddJumpFormState extends State<AddJumpForm> {
                 controller: _dateController,
                 decoration: const InputDecoration(
                   labelText: 'Fecha',
-                  suffixIcon: Icon(Icons.calendar_today),
+                  suffixIcon: Icon(Icons.calendar_today_outlined),
                 ),
                 readOnly: true,
                 onTap: _selectDate,

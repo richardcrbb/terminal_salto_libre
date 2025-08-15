@@ -3,6 +3,7 @@ import 'package:terminal_salto_libre/data/logbook_db.dart';
 import 'package:terminal_salto_libre/data/models.dart';
 import 'package:terminal_salto_libre/data/shared_functions.dart';
 import 'package:terminal_salto_libre/data/notifiers.dart';
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -20,21 +21,13 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<Map<String, dynamic>> _loadData() async {
+    lastJumpNumberNotifier.value = await JumpLogDatabase.getLastJumpNumber();
+    lastTotalFreefallNotifier.value = await JumpLogDatabase.getLastTotalFreefall();
+
     final jumps = await JumpLogDatabase.getJumpsWithLastDate();
     final counts = await JumpLogDatabase.getJumpTypeCounts();
 
-    //actualizamos los notifiers
-
-    if (jumps.isNotEmpty) {
-      lastJumpNumberNotifier.value = jumps.first.jumpNumber; // último número de salto
-      lastTotalFreefallNotifier.value = jumps.first.totalFreefall ?? 0; // último total freefall
-    }
-
-    
-    return {
-      'jumps': jumps,
-      'counts': counts,
-    };
+    return {'jumps': jumps, 'counts': counts};
   }
 
   @override
@@ -45,7 +38,7 @@ class _HomePageState extends State<HomePage> {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         } else if (snapshot.hasError) {
-          return const Center(child: Text('Error al cargar los datos'));
+          return  Center(child: Text('Error al cargar los datos ${snapshot.error}'));
         }
 
         final data = snapshot.data!;
@@ -70,8 +63,9 @@ class _HomePageState extends State<HomePage> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  SizedBox(width: 100,child: Text('Saltos del día ')), CircleAvatar(child: Text('${jumps.length}'),)
-                  ],
+                  SizedBox(width: 100, child: Text('Saltos del día ')),
+                  CircleAvatar(child: Text('${jumps.length}')),
+                ],
               ),
             ),
             Padding(
@@ -79,7 +73,8 @@ class _HomePageState extends State<HomePage> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  SizedBox(width: 100,child: Text('Sobrecupos ')), CircleAvatar(child: Text('${sobrecuposDelDia.length}'),)
+                  SizedBox(width: 100, child: Text('Sobrecupos ')),
+                  CircleAvatar(child: Text('${sobrecuposDelDia.length}')),
                 ],
               ),
             ),
@@ -95,7 +90,7 @@ class _HomePageState extends State<HomePage> {
                       itemBuilder: (context, index) {
                         final jump = jumps[index];
                         return ListTile(
-                          leading: Text('#${index+1}'),
+                          leading: Text('#${index + 1}'),
                           title: Text(jump.location),
                           subtitle: Text(
                             '${jump.weight} kg - ${jump.age} años - con ${jump.signature}',
