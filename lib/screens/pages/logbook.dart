@@ -31,6 +31,8 @@ class _LogbookPageState extends State<LogbookPage> {
     setState(() {});
   }
 
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -66,7 +68,7 @@ class _LogbookPageState extends State<LogbookPage> {
                     return ListTile(
                       leading: CircleAvatar(child: Text('${jump.jumpNumber}')),
                       title: Text(
-                        '${jump.jumpType} en ${jump.location} el ${jump.date}',
+                        '${jump.jumpType} en ${jump.location} el ${formatearFecha(jump.date)}',
                       ),
                       subtitle: Text(
                         '${jump.aircraft}, ${jump.altitude} FT, ${jump.equipment}, ${jump.description}, ${jump.age ?? ''} años, ${jump.weight ?? ''} kg, ${jump.signature}',

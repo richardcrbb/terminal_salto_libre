@@ -1,4 +1,6 @@
 import 'package:flutter/widgets.dart';
+import 'package:intl/intl.dart';
+
 
 class JumpLog {
   final int? id;
@@ -81,3 +83,9 @@ const List<String> jumpTypeList = [
   'Coach',
   'Fun Jump',
 ];
+
+  String formatearFecha(String fechaISO) {
+  // Si jump.date ya es un String ISO, lo convertimos a DateTime
+  final dateTime = DateTime.parse(fechaISO);
+  return DateFormat('dd/MMM/yyyy').format(dateTime);
+  }

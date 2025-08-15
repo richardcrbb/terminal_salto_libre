@@ -95,7 +95,7 @@ class _HomePageState extends State<HomePage> {
                           subtitle: Text(
                             '${jump.weight} kg - ${jump.age} años - con ${jump.signature}',
                           ),
-                          trailing: Text(jump.date),
+                          trailing: Text(formatearFecha(jump.date)),
                         );
                       },
                     ),
