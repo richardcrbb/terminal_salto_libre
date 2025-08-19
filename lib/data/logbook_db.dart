@@ -221,28 +221,32 @@ static Future<void> deleteJumpByNumber(int jumpNumber) async {
 
 
   //busca los saltos del ultimo dia que salte....
+  // Busca todos los saltos del último día (ignorando la hora)
+static Future<List<JumpLog>> getJumpsWithLastDate() async {
+  final db = await database;
 
-  static Future<List<JumpLog>> getJumpsWithLastDate() async {
-    final db = await database;
+  // Primero obtenemos solo la parte de la fecha (YYYY-MM-DD) de la última fecha registrada
+  final lastDateResult = await db.rawQuery(
+    "SELECT substr(MAX(date), 1, 10) as lastDate FROM jumps",
+  );
 
-    // Primero obtenemos la última fecha registrada
-    final lastDateResult = await db.rawQuery(
-      'SELECT MAX(date) as lastDate FROM jumps',
-    );
+  final lastDate = lastDateResult.first['lastDate'] as String?;
+  if (lastDate == null) return [];
 
-    final lastDate = lastDateResult.first['lastDate'];
-    if (lastDate == null) return [];
+  // Luego obtenemos todos los registros de ese día (ignorando la hora)
+  final result = await db.query(
+    'jumps',
+    where: "substr(date, 1, 10) = ?",
+    whereArgs: [lastDate],
+    orderBy: 'id DESC',
+  );
 
-    // Luego obtenemos todos los registros con esa fecha
-    final result = await db.query(
-      'jumps',
-      where: 'date = ?',
-      whereArgs: [lastDate],
-      orderBy: 'id DESC',
-    );
-
-    return result.map((map) => JumpLog.fromMap(map)).toList();
+  return result.map((map) => JumpLog.fromMap(map)).toList();
   }
+
+
+
+
 
   //busca cuantos saltos tengo de cada tipo <tandem,cam, aff ....>
   static Future<Map<String, int>> getJumpTypeCounts() async {

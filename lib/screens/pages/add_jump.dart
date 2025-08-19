@@ -146,13 +146,13 @@ class _AddJumpFormState extends State<AddJumpForm> {
     super.dispose();
   }
 
-  Future<void> _selectDate() async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedDate,
-      firstDate: DateTime(1990),
-      lastDate: DateTime(2100),
-    );
+    Future<void> _selectDate() async {
+      final DateTime? picked = await showDatePicker(
+        context: context,
+        initialDate: _selectedDate,
+        firstDate: DateTime(1990),
+        lastDate: DateTime(2100),
+      );
 
     if (picked != null) {
       setState(() {
