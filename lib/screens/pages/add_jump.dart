@@ -19,14 +19,14 @@ class AddJumpForm extends StatefulWidget {
 class _AddJumpFormState extends State<AddJumpForm> {
   final _formKey = GlobalKey<FormState>();
 
-  // Variable interna para manejar fecha real
+  //. Variable interna para manejar fecha real
   DateTime _selectedDate = DateTime.now();
   final _dateFormat = DateFormat('dd-MMM-yyyy'); // formato para mostrar mis fechas
 
-  // Variable para saber si esta inicializando la pagina de edicion:
+  //. Variable para saber si esta inicializando la pagina de edicion:
   bool _inicializando = true;
 
-  //controladores
+  //. Controladores
   final _jumpNumberController = TextEditingController();
   final _dateController = TextEditingController();
   final _locationController = TextEditingController(text: "Cali");
@@ -46,7 +46,7 @@ class _AddJumpFormState extends State<AddJumpForm> {
   void initState() {
     super.initState();
 
-    //Controladores iniciales si es un salto existente
+    //. Controladores iniciales si es un salto existente
     if (widget.existingJump != null) {
       
       final jump = widget.existingJump!;//guardamos el salto que estamos editando en una variable de esta clase.
@@ -79,7 +79,7 @@ class _AddJumpFormState extends State<AddJumpForm> {
 
     } 
     
-    // Valores por defecto (como tenías antes)
+    //. Valores por defecto (como tenías antes)
     else {
       _dateController.text = _dateFormat.format(_selectedDate);
       _locationController.text = "Cali";
@@ -104,7 +104,7 @@ class _AddJumpFormState extends State<AddJumpForm> {
     
   }
 
-  //funcion para calcular totalfreefall en registro nuevo
+  //. Funcion para calcular totalfreefall en registro nuevo
   void _calcularTotalFreefall() {
     final delay = int.tryParse(_freefallDelayController.text) ?? 0;
     final totalSegundos = lastTotalFreefallNotifier.value + delay;
@@ -118,7 +118,7 @@ class _AddJumpFormState extends State<AddJumpForm> {
 
   
   
-  //funcion para actualizar totalfreefall en registro editado si fuera necesario
+  //. Funcion para actualizar totalfreefall en registro editado si fuera necesario
   void _actualizarTotalFreefall({required int baseHistorica, required int delay}) {
   final totalSegundos = baseHistorica + delay;
   _totalFreefallController.text = totalSegundos.toString();
@@ -127,7 +127,7 @@ class _AddJumpFormState extends State<AddJumpForm> {
 
 
 
-
+//. Metodo para limpiar memoria cache.
   @override
   void dispose() {
     _jumpNumberController.dispose();
@@ -147,6 +147,7 @@ class _AddJumpFormState extends State<AddJumpForm> {
     super.dispose();
   }
 
+//. Funcion para seleccionar y formatear fecha
     Future<void> _selectDate() async {
       final DateTime? picked = await showDatePicker(
         context: context,
@@ -161,8 +162,9 @@ class _AddJumpFormState extends State<AddJumpForm> {
         _dateController.text = _dateFormat.format(picked);
       });
     }
-  }
+    }
 
+//. Funcion para crear objeto jumplog, nuevo o editado y llama al callback para guardarlo en db
   void _saveForm() {
     if (_formKey.currentState!.validate()) {
       final newJump = JumpLog(
@@ -188,12 +190,14 @@ class _AddJumpFormState extends State<AddJumpForm> {
     }
   }
 
+//. Formato de texto privado a esta clase.
   final TextStyle _titulos = const TextStyle(
     fontSize: 30,
     letterSpacing: 10.0, // 👉 Aumenta el espacio entre letras
     fontWeight: FontWeight.bold,
   );
 
+//. widgetTree de esta ruta.
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -215,11 +219,11 @@ class _AddJumpFormState extends State<AddJumpForm> {
                       if (widget.existingJump == null) {
                         _jumpNumberController.text = (ultimoSalto + 1)
                             .toString();
-                      } // asignar numero solo si no estamos editando
+                      } // asigna numero de salto, solo si un salto nuevo
+//. Numero de salto.
                       return TextFormField(
                         controller: _jumpNumberController,
-                        readOnly: true,
-                        //keyboardType: TextInputType.number,
+                        readOnly: true, // Si es un salto editado al cargar datos de ruta se asigna el numero de salto.
                         decoration: const InputDecoration(
                           labelText: 'Número de salto',
                         ),
@@ -228,6 +232,7 @@ class _AddJumpFormState extends State<AddJumpForm> {
                       );
                     },
               ),
+//. Fecha.
               TextFormField(
                 controller: _dateController,
                 decoration: const InputDecoration(
@@ -238,24 +243,29 @@ class _AddJumpFormState extends State<AddJumpForm> {
                 onTap: _selectDate,
                 validator: (value) => value!.isEmpty ? 'Requerido' : null,
               ),
+//. Lugar.
               TextFormField(
                 controller: _locationController,
                 decoration: const InputDecoration(labelText: 'Lugar'),
                 validator: (value) => value!.isEmpty ? 'Requerido' : null,
               ),
+//. Aeronave.              
               TextFormField(
                 controller: _aircraftController,
                 decoration: const InputDecoration(labelText: 'Aeronave'),
               ),
+//. Equipo.              
               TextFormField(
                 controller: _equipmentController,
                 decoration: const InputDecoration(labelText: 'Equipo'),
               ),
+//. Altitud.              
               TextFormField(
                 controller: _altitudeController,
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(labelText: 'Altitud (pies)'),
               ),
+//. Delay.              
               TextFormField(
                 controller: _freefallDelayController,
                 keyboardType: TextInputType.number,
@@ -263,6 +273,7 @@ class _AddJumpFormState extends State<AddJumpForm> {
                   labelText: 'Retardo (segundos)',
                 ),
               ),
+//. TotalFreefall.              
               TextFormField(
                 controller: _totalFreefallControllerEdited,
                 readOnly: true,
@@ -272,6 +283,7 @@ class _AddJumpFormState extends State<AddJumpForm> {
                 ),
                 validator: (value) => value!.isEmpty ? 'Requerido' : null,
               ),
+//. Tipo/Categoria.              
               ValueListenableBuilder(
                 valueListenable: _jumpTypeNotifier,
                 builder: (BuildContext context, String jumpT, Widget? child) {
@@ -287,26 +299,31 @@ class _AddJumpFormState extends State<AddJumpForm> {
                   );
                 },
               ),
+//. Peso.              
               TextFormField(
                 controller: _weightController,
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(labelText: 'Peso'),
               ),
+//. Edad.              
               TextFormField(
                 controller: _ageController,
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(labelText: 'Edad'),
               ),
+//. Descripcion.              
               TextFormField(
                 controller: _descriptionController,
                 decoration: const InputDecoration(labelText: 'Descripción'),
                 maxLines: 3,
               ),
+//. Signature.              
               TextFormField(
                 controller: _signatureController,
                 decoration: const InputDecoration(labelText: 'Firma'),
               ),
               const SizedBox(height: 20),
+//. Boton de guardado.              
               ElevatedButton(
                 onPressed: _saveForm,
                 child: const Text("Guardar salto"),

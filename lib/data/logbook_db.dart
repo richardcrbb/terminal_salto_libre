@@ -55,7 +55,10 @@ class JumpLogDatabase {
               },
     );
   }
+                                                      //!CRUD -> CUDR
 
+  //. INSERTAR
+  //  Funcion para insertar un salto
   static Future<int> insertJump(JumpLog log) async {
     final db = await database;
     return await db.insert(
@@ -65,99 +68,73 @@ class JumpLogDatabase {
     );
   }
 
-  static Future<List<JumpLog>> getJumps() async {
-    final db = await database;
-    final result = await db.query('jumps', orderBy: 'id DESC');
-    return result.map((map) => JumpLog.fromMap(map)).toList();
-  }
+  //. ACTUALIZAR en jumps
+  // Funcion para actualizar un salto y recalcular datos de freefall posteriores
+  static Future<void> updateJumpAndRecalculate(JumpLog updatedJump) async {
+  final db = await database;
 
-  static Future<int> updateJump(JumpLog log) async {
-    final db = await database;
-    return await db.update(
+  // Paso 1: Actualizar el salto editado
+  await db.update(
+    'jumps',
+    updatedJump.toMap(),
+    where: 'id = ?',
+    whereArgs: [updatedJump.id],
+  );
+
+  // Paso 2: Obtener todos los saltos posteriores
+  final posteriores = await db.query(
+    'jumps',
+    where: 'jumpNumber > ?',
+    whereArgs: [updatedJump.jumpNumber],
+    orderBy: 'jumpNumber ASC',
+  );
+
+  // Paso 3: Recalcular totalFreefall en cascada
+  int totalAcumulado = updatedJump.totalFreefall!;
+
+  for (var salto in posteriores) {
+    final delay = salto['freefallDelay'] as int;
+    totalAcumulado += delay;
+
+    await db.update(
       'jumps',
-      log.toMap(),
+      {'totalFreefall': totalAcumulado},
       where: 'id = ?',
-      whereArgs: [log.id],
+      whereArgs: [salto['id']],
     );
   }
-
-  static Future<int> deleteJump(int id) async {
-    final db = await database;
-    return await db.delete('jumps', where: 'id = ?', whereArgs: [id]);
   }
 
-  // Obtiene de 'jumps 'el número del último salto (o busca en la tabla 'settings')
-  static Future<int> getLastJumpNumber() async {
-    final db = await database;
+  //. ACTUALIZAR en settings
+  // Funcion que actualiza saltos previos y caida libre previa en la tabla settigns que por defecto esta en 0
+  // tambien puede actualizar los datos que se le ingresan a settings, eso si antes de insertar un nuevo salto en jumps.
 
-    final countResult = await db.rawQuery(
-      'SELECT COUNT(*) as count FROM jumps',
-    );
-    final count = countResult.first['count'] as int;
+  static Future<void> savePreviousSettings(int saltosPrevios, int caidaLibrePrevia) async {
+  final db = await database;
 
-    if (count == 0) {
-      // Si 'jumps 'está vacía, obtener el valor de startingJumpNumber en 'settings'
-      final settingsResult = await db.query(
-        'settings',
-        columns: ['value'],
-        where: 'key = ?',
-        whereArgs: ['startingJumpNumber'],
-      );
+  // Verificar si la tabla jumps está vacía
+  final countResult = await db.rawQuery('SELECT COUNT(*) as count FROM jumps');
+  final count = countResult.first['count'] as int;
 
-      if (settingsResult.isNotEmpty) {
-        return settingsResult.first['value'] as int; 
-      }
-      return 0; // Si no existe en 'settings', devolver 0 por defecto
-    }
-
-    //si 'jumps' no esta vacia:
-
-    final result = await db.rawQuery(
-      'SELECT MAX(jumpNumber) as maxJump FROM jumps',
-    );
-    return result.first['maxJump'] as int;
+  if (count > 0) {
+    // Si hay registros en jumps, no permitir guardar
+    throw Exception('❌ Ya no se puede insertar saltos previos');
   }
 
-
-
-  // Obtiene el totalFreefall del último salto (o de la tabla 'settings')
-  static Future<int> getLastTotalFreefall() async {
-    final db = await database;
-
-    final countResult = await db.rawQuery(
-      'SELECT COUNT(*) as count FROM jumps',
-    );
-    final count = countResult.first['count'] as int;
-
-    if (count == 0) {
-      // Si 'jumps 'está vacía, obtener el valor de totalFreefall en 'settings'
-      final settingsResult = await db.query(
-        'settings',
-        columns: ['previousFreefall'], //columna de la tabla
-        where: 'key = ?',
-        whereArgs: ['startingJumpNumber'], // fila de la tabla
-      );
-
-      if (settingsResult.isNotEmpty) {
-        return settingsResult.first['previousFreefall'] as int;
-      }
-      return 0; // Si no existe en 'settings', devolver 0 por defecto
-    }
-
-    //si 'jumps' no esta vacia:
-
-    final result = await db.query(
-      'jumps',
-      columns: ['totalFreefall'],
-      orderBy: 'id DESC',
-      limit: 1,
-    );
-    return (result.first['totalFreefall'] as int?) ?? 0;
+  // Actualizar los valores en settings
+  await db.update(
+    'settings',
+    {
+      'value': saltosPrevios,
+      'previousFreefall': caidaLibrePrevia,
+    },
+    where: 'key = ?',
+    whereArgs: ['startingJumpNumber'],
+  );
   }
 
-
-
-  //funcion para eliminar un registro y actualizar el jumpnumber
+  //. ELIMINAR
+  //Funcion para eliminar un registro y actualizar el jumpnumber
   // ✅ Elimina un salto y recalcula jumpNumber y totalFreefall de los posteriores
 static Future<void> deleteJumpByNumber(int jumpNumber) async {
   final db = await database;
@@ -217,10 +194,84 @@ static Future<void> deleteJumpByNumber(int jumpNumber) async {
   }
   }
 
+  //. TODOS LOS SALTOS
+  //  Funcion para obtener una lista de todos los saltos
+  static Future<List<JumpLog>> getJumps() async {
+    final db = await database;
+    final result = await db.query('jumps', orderBy: 'id DESC');
+    return result.map((map) => JumpLog.fromMap(map)).toList();
+  }
 
+  //. NUMERO DEL ULTIMO salto
+  // Funcion que optiene de 'jumps' el NUMERO DEL ULTIMO salto (o busca en la tabla 'settings')
+  static Future<int> getLastJumpNumber() async {
+    final db = await database;
+    final countResult = await db.rawQuery(
+      'SELECT COUNT(*) as count FROM jumps',
+    );
+    final count = countResult.first['count'] as int;
 
+    if (count == 0) {
+      // Si 'jumps 'está vacía, obtener el valor de startingJumpNumber en 'settings'
+      final settingsResult = await db.query(
+        'settings',
+        columns: ['value'],
+        where: 'key = ?',
+        whereArgs: ['startingJumpNumber'],
+      );
 
-  //busca los saltos del ultimo dia que salte....
+      if (settingsResult.isNotEmpty) {
+        return settingsResult.first['value'] as int; 
+      }
+      return 0; // Si no existe en 'settings', devolver 0 por defecto
+    }
+
+    //si 'jumps' no esta vacia:
+
+    final result = await db.rawQuery(
+      'SELECT MAX(jumpNumber) as maxJump FROM jumps',
+    );
+    return result.first['maxJump'] as int;
+  }
+
+  //. TOTALFREEFALL
+  // Funcion que obtiene el TOTALFREEFALL del último salto (o de la tabla 'settings')
+  static Future<int> getLastTotalFreefall() async {
+    final db = await database;
+
+    final countResult = await db.rawQuery(
+      'SELECT COUNT(*) as count FROM jumps',
+    );
+    final count = countResult.first['count'] as int;
+
+    if (count == 0) {
+      // Si 'jumps 'está vacía, obtener el valor de totalFreefall en 'settings'
+      final settingsResult = await db.query(
+        'settings',
+        columns: ['previousFreefall'], //columna de la tabla
+        where: 'key = ?',
+        whereArgs: ['startingJumpNumber'], // fila de la tabla
+      );
+
+      if (settingsResult.isNotEmpty) {
+        return settingsResult.first['previousFreefall'] as int;
+      }
+      return 0; // Si no existe en 'settings', devolver 0 por defecto
+    }
+
+    //si 'jumps' no esta vacia:
+
+    final result = await db.query(
+      'jumps',
+      columns: ['totalFreefall'],
+      orderBy: 'id DESC',
+      limit: 1,
+    );
+    return (result.first['totalFreefall'] as int?) ?? 0;
+  }
+
+  //. Lista de saltos del ultimo dia.
+  // Funcion que busca los saltos del ultimo dia que salte....
   // Busca todos los saltos del último día (ignorando la hora)
 static Future<List<JumpLog>> getJumpsWithLastDate() async {
   final db = await database;
@@ -244,11 +295,8 @@ static Future<List<JumpLog>> getJumpsWithLastDate() async {
   return result.map((map) => JumpLog.fromMap(map)).toList();
   }
 
-
-
-
-
-  //busca cuantos saltos tengo de cada tipo <tandem,cam, aff ....>
+  //. Lista resumen por categoria.
+  // Funcion que busca cuantos saltos tengo de cada tipo <tandem,cam, aff ....>
   static Future<Map<String, int>> getJumpTypeCounts() async {
     final db = await database;
 
@@ -290,72 +338,8 @@ static Future<List<JumpLog>> getJumpsWithLastDate() async {
     return counts;
   }
 
-
-
-  
-  //insertar o actualizar saltos previos y caida libre previa en la tabla settigns
-
-  static Future<void> savePreviousSettings(int saltosPrevios, int caidaLibrePrevia) async {
-  final db = await database;
-
-  // Verificar si la tabla jumps está vacía
-  final countResult = await db.rawQuery('SELECT COUNT(*) as count FROM jumps');
-  final count = countResult.first['count'] as int;
-
-  if (count > 0) {
-    // Si hay registros en jumps, no permitir guardar
-    throw Exception('❌ Ya no se puede insertar saltos previos');
-  }
-
-  // Actualizar los valores en settings
-  await db.update(
-    'settings',
-    {
-      'value': saltosPrevios,
-      'previousFreefall': caidaLibrePrevia,
-    },
-    where: 'key = ?',
-    whereArgs: ['startingJumpNumber'],
-  );
-  }
-
-  //Funcion para actualizar un salto y recalcular datos de freefall posteriores
-  static Future<void> updateJumpAndRecalculate(JumpLog updatedJump) async {
-  final db = await database;
-
-  // Paso 1: Actualizar el salto editado
-  await db.update(
-    'jumps',
-    updatedJump.toMap(),
-    where: 'id = ?',
-    whereArgs: [updatedJump.id],
-  );
-
-  // Paso 2: Obtener todos los saltos posteriores
-  final posteriores = await db.query(
-    'jumps',
-    where: 'jumpNumber > ?',
-    whereArgs: [updatedJump.jumpNumber],
-    orderBy: 'jumpNumber ASC',
-  );
-
-  // Paso 3: Recalcular totalFreefall en cascada
-  int totalAcumulado = updatedJump.totalFreefall!;
-
-  for (var salto in posteriores) {
-    final delay = salto['freefallDelay'] as int;
-    totalAcumulado += delay;
-
-    await db.update(
-      'jumps',
-      {'totalFreefall': totalAcumulado},
-      where: 'id = ?',
-      whereArgs: [salto['id']],
-    );
-  }
-}
-
-//funcion para marcar un salto como favorito
+//. FAVORITO
+// Funcion para marcar un salto como favorito
 
 static Future<void> favorite(int? id) async {
     final db = await database;
@@ -366,12 +350,33 @@ static Future<void> favorite(int? id) async {
     ''', [id]);
   }
 
-//funcion para extraer una lista de saltos favoritos de mi base de datos
+//. LISTA de favoritos
+// Funcion para extraer una lista de saltos favoritos de mi base de datos
 static Future<List<JumpLog>> favList()async{
   final db = await database;
   final result = await db.query('jumps', orderBy: 'id DESC', where: 'favorites = ?', whereArgs: [1]);
     return result.map((map) => JumpLog.fromMap(map)).toList();
 }
 
+
+//!
+// ? Metodos que no son necesarios 
+/*  
+   static Future<int> updateJump(JumpLog log) async {
+    final db = await database;
+    return await db.update(
+      'jumps',
+      log.toMap(),
+      where: 'id = ?',
+      whereArgs: [log.id],
+    );
+  }
+  
+  static Future<int> deleteJump(int id) async {
+    final db = await database; 
+    return await db.delete('jumps', where: 'id = ?', whereArgs: [id]);
+  }
+  
+*/
 
 }

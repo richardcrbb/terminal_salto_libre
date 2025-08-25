@@ -12,20 +12,23 @@ class LogbookPage extends StatefulWidget {
 }
 
 class _LogbookPageState extends State<LogbookPage> {
+
+//. Propiedades de la clase/ variables.   
   int _currentPage = 0;
   final int _itemsPerPage = 20;
   late Future<List<JumpLog>>? _jumpsFuture;
 
+//.Carga Inicial
   @override
   void initState() {
     super.initState();
     _loadJumps();
   }
 
-  void _loadJumps() {
-    _jumpsFuture = JumpLogDatabase.getJumps();
-  }
+//. Metodo para cargar datos de db.
+  Future<void> _loadJumps() async{_jumpsFuture = JumpLogDatabase.getJumps();}
 
+//. Metodo para recargar datos y UI de esta ruta.
   Future<void> _refreshJumps() async {
     _loadJumps();
     setState(() {});
@@ -45,7 +48,7 @@ class _LogbookPageState extends State<LogbookPage> {
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return const Center(child: Text('No hay saltos registrados.'));
           }
-
+//. En esta seccion se recibe los datos de la db y se asignan a variables de la ruta, tambien se definen variables para paginacion de la ruta.
           final jumps = snapshot.data!;
           final totalPages = (jumps.length / _itemsPerPage).ceil();
 
@@ -57,7 +60,7 @@ class _LogbookPageState extends State<LogbookPage> {
             startIndex,
             endIndex > jumps.length ? jumps.length : endIndex,
           );
-
+//.Aqui empieza el widgetTree de esta ruta.
           return Column(
             children: [
               Expanded(
@@ -65,6 +68,7 @@ class _LogbookPageState extends State<LogbookPage> {
                   itemCount: visibleJumps.length,
                   itemBuilder: (context, index) {
                     final jump = visibleJumps[index];
+//. Esta caja muestra el listado de saltos divididos en paginas de 20 Items, se define funcion onLongPress para editar,eliminar o marcar como favorito.                    
                     return ListTile(
                       leading: CircleAvatar(child: Text('${jump.jumpNumber}')),
                       title: Text(
@@ -80,6 +84,7 @@ class _LogbookPageState extends State<LogbookPage> {
                         final action = await showDialog<String>(
                           context: context,
                           builder: (BuildContext dialogContext) {
+//. Esta caja saca una pantalla nueva con tres opciones {EDITAR, ELIMINAR, FAVORITOS}.
                             return AlertDialog(
                               title: const Text('Acciones'),
                               content: const Text(
@@ -106,40 +111,46 @@ class _LogbookPageState extends State<LogbookPage> {
                           },
                         );
                         if (!mounted || action == null) return;
-
+//. En esta seccion se intenta ELIMINAR
                         if (action == 'Eliminar') {
                           try{
                             await JumpLogDatabase.deleteJumpByNumber(jump.jumpNumber,);
+                            // Actualizar el ValueNotifier con el último salto y el notifier de acomulado de caida libre
                             lastJumpNumberNotifier.value = await JumpLogDatabase.getLastJumpNumber();
                             lastTotalFreefallNotifier.value = await JumpLogDatabase.getLastTotalFreefall();
-                          if (!mounted) return;
-                          messenger.showSnackBar(const SnackBar(content: Text('✅ Salto eliminado')),);
-                          await _refreshJumps();
-                          } catch(error){
-                            if (!mounted) return;
-                            messenger.showSnackBar(SnackBar(content: Text('❌ No se puedo eliminar el salto: $error')),);
-                          }
-                        } else if (action == 'Editar') {
+                            // Señala que esta ruta logbook debe reconstruirse con los datos actuales de la db.
+                            await _refreshJumps();
+                            messenger.showSnackBar(const SnackBar(content: Text('✅ Salto eliminado')),);
+                            } catch(error){
+                              if (!mounted) return;
+                              messenger.showSnackBar(SnackBar(content: Text('❌ No se puedo eliminar el salto: $error')),);}
+                        } 
+//. En esta seccion se intenta EDITAR
+                        else if (action == 'Editar') {
                           if (!mounted) return;
                           try{
                             await ctx.push(
                             MaterialPageRoute(
                               builder: (_) => AddJumpForm(
+                                //aqui se envia el objeto JumpLog y un callback de edicion. [push data]
                                 existingJump: jump,
                                 onSave: (updatedJump) async {
                                   await JumpLogDatabase.updateJumpAndRecalculate(updatedJump,);
+                                  // Actualizar el ValueNotifier con el último salto y el notifier de acomulado de caida libre
                                   lastJumpNumberNotifier.value = await JumpLogDatabase.getLastJumpNumber();
                                   lastTotalFreefallNotifier.value = await JumpLogDatabase.getLastTotalFreefall();
-                                  messenger.showSnackBar(const SnackBar(content: Text('✅ Salto editado')),);
+                                  // Señala que esta ruta logbook debe reconstruirse con los datos actuales de la db.
                                   await _refreshJumps();
+                                  messenger.showSnackBar(const SnackBar(content: Text('✅ Salto editado')),);
                                 },
                               ),
                             ),
                           );
                           }catch(error){if (!mounted) return;
-                                        messenger.showSnackBar(SnackBar(content: Text('❌ No se puedo editar el salto: $error')),);
-                                        }
-                        } else if (action == 'Favoritos'){
+                                        messenger.showSnackBar(SnackBar(content: Text('❌ No se puedo editar el salto: $error')),);}
+                        } 
+//. En esta seccion se intenta marcar como Favorito
+                        else if (action == 'Favoritos'){
                           try{await JumpLogDatabase.favorite(jump.id);
                               messenger.showSnackBar(const SnackBar(content: Text('✅ Salto Favorito')),);
                               await _refreshJumps();
@@ -150,6 +161,7 @@ class _LogbookPageState extends State<LogbookPage> {
                   },
                 ),
               ),
+//. Esta caja saca muestra botones para avanzar/retroceder pagina.
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
                 child: Row(
@@ -185,6 +197,7 @@ class _LogbookPageState extends State<LogbookPage> {
           );
         },
       ),
+//. Este boton presenta el formato para agregar un salto nuevo y lo guarda, actualiza los notifiers .
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           await Navigator.push(
@@ -196,20 +209,14 @@ class _LogbookPageState extends State<LogbookPage> {
                   onSave: (jump) async {
                     try {
                       await JumpLogDatabase.insertJump(jump);
-                      // 🔹 Actualizar el ValueNotifier con el último salto
+                      // Actualizar el ValueNotifier con el último salto y el notifier de acomulado de caida libre
                       lastJumpNumberNotifier.value = await JumpLogDatabase.getLastJumpNumber();
                       lastTotalFreefallNotifier.value = await JumpLogDatabase.getLastTotalFreefall();
-                      // 🔹 Señalar que Home debe recargar
+                      // Señala que esta ruta logbook debe reconstruirse con los datos actuales de la db.
                       await _refreshJumps();
                     } catch (error) {
                       if (!mounted) return;
-                      messenger.showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            '❌ Ocurrió un error al guardar el salto. $error',
-                          ),
-                          backgroundColor: Colors.red,
-                        ),
+                      messenger.showSnackBar(SnackBar(content: Text('❌ Ocurrió un error al guardar el salto. $error',),backgroundColor: Colors.red,),
                       );
                     }
                   },

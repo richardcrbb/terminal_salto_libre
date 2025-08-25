@@ -49,7 +49,7 @@ class _HomePageState extends State<HomePage> {
             .where((jump) => (jump.weight ?? 0) > 85)
             .toList();
         final counts = data['counts'] as Map<String, int>;
-
+//.Aqui empieza el widgetTree de esta ruta.
         return SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -61,7 +61,7 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 10),
               Text('Resumen del último día', style: titulo),
               const SizedBox(height: 10),
-              //Esta caja muestra total de saltos del ultimo dia
+//.Esta caja muestra total de saltos del ultimo dia
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Row(
@@ -72,7 +72,7 @@ class _HomePageState extends State<HomePage> {
                   ],
                 ),
               ),
-              //Esta caja muestra los sobrecupos
+//. Esta caja muestra los sobrecupos
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Row(
@@ -84,7 +84,7 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               const SizedBox(height: 10,),
-              //Esta caja muestra la lista de los saltos del ultimo dia
+//. Esta caja muestra la lista de los saltos del ultimo dia
               SizedBox(
                 height: 300,
                 child: jumps.isEmpty
@@ -109,7 +109,7 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 10),
               Text('RESUMEN DE CARRERA',style: titulo),
               const SizedBox(height: 10),
-              //Esta caja muestra la un resumen de las categorias de mis saltos totalizadas.
+//. Esta caja muestra la un resumen por categorias de mis saltos totalizado.
               SizedBox(
                 height: 200,
                 child: ListView.builder(
@@ -133,6 +133,7 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 10),
               Text('FAVORITOS',style: titulo),
               const SizedBox(height: 10),
+//. Esta caja muestra lista de favoritos.
               SizedBox(
                 height: 200,
                 child: favList.isEmpty? Text('No hay saltos Favoritos')
@@ -146,7 +147,6 @@ class _HomePageState extends State<HomePage> {
                   );
                 },),
               ),
-              
             ],
           ),
         );
