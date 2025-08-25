@@ -43,6 +43,7 @@ class _SettingsPageState extends State<SettingsPage> {
               SizedBox(height: 40),
               ElevatedButton(
                 onPressed: () async {
+                  final messenger = ScaffoldMessenger.of(context);
                   try {
                     final saltos = int.tryParse(_saltosPrevios.text) ?? 0;
                     final caida = int.tryParse(_caidaLibrePrevia.text) ?? 0;
@@ -55,16 +56,14 @@ class _SettingsPageState extends State<SettingsPage> {
                     lastTotalFreefallNotifier.value =
                         await JumpLogDatabase.getLastTotalFreefall();
 
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    messenger.showSnackBar(
                       SnackBar(
                         content: Text('✅ Valores guardados correctamente'),
                       ),
                     );
 
                   } catch (e) {
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(SnackBar(content: Text(e.toString())));
+                    messenger.showSnackBar(SnackBar(content: Text(e.toString())));
                   }
                 },
                 child: Text("Guardar"),

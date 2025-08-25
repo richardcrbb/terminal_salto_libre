@@ -17,6 +17,7 @@ class JumpLog {
   final int? age;
   final String description;
   final String signature;
+  final int favorites;
 
   JumpLog({
     this.id,
@@ -33,6 +34,7 @@ class JumpLog {
     this.totalFreefall,
     required this.description,
     required this.signature,
+    this.favorites=0,
   });
 
   Map<String, dynamic> toMap() {
@@ -51,6 +53,7 @@ class JumpLog {
       'age' : age,
       'description': description,
       'signature': signature,
+      'favorites': favorites,
     };
   }
 
@@ -70,6 +73,7 @@ class JumpLog {
       age : map['age'],
       description: map['description'],
       signature: map['signature'],
+      favorites: map['favorites'],
     );
   }
 }

@@ -41,6 +41,9 @@ class WidgetTree extends StatelessWidget {
                   );
                 },
               ),
+              IconButton(onPressed: () {
+                
+              }, icon: Icon(Icons.cloud_upload_outlined))
             ],
           ),
           body: Center(child: pages[valorcillo]),

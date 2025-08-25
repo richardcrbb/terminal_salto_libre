@@ -5,8 +5,11 @@ import 'package:terminal_salto_libre/data/notifiers.dart';
 import 'package:terminal_salto_libre/data/shared_functions.dart';
 
 class AddJumpForm extends StatefulWidget {
-  final void Function(JumpLog) onSave;
+  
+  //data que se recibe de la ruta logbook
   final JumpLog? existingJump;
+  final void Function(JumpLog) onSave;
+  
   const AddJumpForm({super.key, required this.onSave, this.existingJump});
 
   @override
@@ -46,9 +49,9 @@ class _AddJumpFormState extends State<AddJumpForm> {
     //Controladores iniciales si es un salto existente
     if (widget.existingJump != null) {
       
-      _selectedDate = DateTime.parse(widget.existingJump!.date); // guarda fecha 
-    
-      final jump = widget.existingJump!;
+      final jump = widget.existingJump!;//guardamos el salto que estamos editando en una variable de esta clase.
+      
+      _selectedDate = DateTime.parse(jump.date); // guarda fecha que viene del salto que estamos editando
       
       _jumpNumberController.text = jump.jumpNumber.toString();
       _dateController.text = _dateFormat.format(_selectedDate);
@@ -58,9 +61,7 @@ class _AddJumpFormState extends State<AddJumpForm> {
       _altitudeController.text = jump.altitude.toString();
       _freefallDelayController.text = jump.freefallDelay.toString();
       _totalFreefallController.text = jump.totalFreefall.toString();
-      _totalFreefallControllerEdited.text = formatSecondsToHHMMSS(
-        jump.totalFreefall!,
-      );
+      _totalFreefallControllerEdited.text = formatSecondsToHHMMSS(jump.totalFreefall!,);
       _jumpTypeNotifier.value = jump.jumpType;
       _weightController.text = jump.weight?.toString() ?? '';
       _ageController.text = jump.age?.toString() ?? '';
@@ -91,11 +92,11 @@ class _AddJumpFormState extends State<AddJumpForm> {
       _jumpTypeNotifier.value = 'Tandem';
       
       
-      _calcularTotalFreefall();
+      _calcularTotalFreefall(); //esta funcion evalua el totalfreefall y lo asigna a su respectivo controller teniendo en cuenta el notifier de totalfreefall
 
       _freefallDelayController.addListener(() {
         _calcularTotalFreefall();
-      });
+      }); //esta funcion escucha cambios en el delay y recalcula el totalfreefall y lo reasigna al controller teniendo en cuenta el notifier de totalfreefall
     }
 
      

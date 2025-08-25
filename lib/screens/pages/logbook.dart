@@ -14,7 +14,7 @@ class LogbookPage extends StatefulWidget {
 class _LogbookPageState extends State<LogbookPage> {
   int _currentPage = 0;
   final int _itemsPerPage = 20;
-  Future<List<JumpLog>>? _jumpsFuture;
+  late Future<List<JumpLog>>? _jumpsFuture;
 
   @override
   void initState() {
@@ -30,8 +30,6 @@ class _LogbookPageState extends State<LogbookPage> {
     _loadJumps();
     setState(() {});
   }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +50,9 @@ class _LogbookPageState extends State<LogbookPage> {
           final totalPages = (jumps.length / _itemsPerPage).ceil();
 
           final startIndex = _currentPage * _itemsPerPage;
-          final endIndex = (_currentPage + 1) * _itemsPerPage;
+          final endIndex =
+              (_currentPage + 1) *
+              _itemsPerPage; //endIndex de una sublista es exclusivo no inclusivo, quiere decir que no incluye el valor de endIndex, se detiene en el anterior a endIndex.
           final visibleJumps = jumps.sublist(
             startIndex,
             endIndex > jumps.length ? jumps.length : endIndex,
@@ -71,18 +71,15 @@ class _LogbookPageState extends State<LogbookPage> {
                         '${jump.jumpType} en ${jump.location} el ${formatearFecha(jump.date)}',
                       ),
                       subtitle: Text(
-                        '${jump.aircraft}, ${jump.altitude} FT, ${jump.equipment}, ${jump.description}, ${jump.age ?? ''} años, ${jump.weight ?? ''} kg, ${jump.signature}',
-                      ),
-                      onTap: () {
-                        // Navegar a detalles si quieres
-                      },
+                        '${jump.aircraft}, ${jump.altitude} FT, ${jump.equipment}, ${jump.description}, ${jump.age ?? ''} años, ${jump.weight ?? ''} kg, ${jump.signature}',),
+                      trailing: jump.favorites == 0 ? Icon(Icons.star_outline_sharp): Icon(Icons.stars_rounded),
                       onLongPress: () async {
-                        final scaffoldContext =
-                            context; // GUARDAR contexto local
+                        final messenger = ScaffoldMessenger.of(context,); //guarda la ruta hacia ScaffoldMessenger
+                        final ctx = Navigator.of(context,); //guarda la ruta hacia Nav que maneja que pantalla se proyecta.
 
                         final action = await showDialog<String>(
                           context: context,
-                          builder: (BuildContext context) {
+                          builder: (BuildContext dialogContext) {
                             return AlertDialog(
                               title: const Text('Acciones'),
                               content: const Text(
@@ -91,45 +88,62 @@ class _LogbookPageState extends State<LogbookPage> {
                               actions: [
                                 TextButton(
                                   onPressed: () =>
-                                      Navigator.pop(context, 'editar'),
+                                      Navigator.pop(dialogContext, 'Editar'),
                                   child: const Text('Editar'),
                                 ),
                                 TextButton(
                                   onPressed: () =>
-                                      Navigator.pop(context, 'eliminar'),
+                                      Navigator.pop(dialogContext, 'Eliminar'),
                                   child: const Text('Eliminar'),
+                                ),
+                                TextButton(
+                                  onPressed: () =>
+                                      Navigator.pop(dialogContext, 'Favoritos'),
+                                  child: const Text('Favoritos'),
                                 ),
                               ],
                             );
                           },
                         );
+                        if (!mounted || action == null) return;
 
-                        if (action == null) return;
-                        if (!mounted) return;
-
-                        if (action == 'eliminar') {
-                          await JumpLogDatabase.deleteJumpByNumber(jump.jumpNumber);
+                        if (action == 'Eliminar') {
+                          try{
+                            await JumpLogDatabase.deleteJumpByNumber(jump.jumpNumber,);
+                            lastJumpNumberNotifier.value = await JumpLogDatabase.getLastJumpNumber();
+                            lastTotalFreefallNotifier.value = await JumpLogDatabase.getLastTotalFreefall();
                           if (!mounted) return;
-
-                          ScaffoldMessenger.of(scaffoldContext).showSnackBar(
-                            const SnackBar(content: Text('✅ Salto eliminado')),
-                          );
-
+                          messenger.showSnackBar(const SnackBar(content: Text('✅ Salto eliminado')),);
                           await _refreshJumps();
-                        } else if (action == 'editar') {
+                          } catch(error){
+                            if (!mounted) return;
+                            messenger.showSnackBar(SnackBar(content: Text('❌ No se puedo eliminar el salto: $error')),);
+                          }
+                        } else if (action == 'Editar') {
                           if (!mounted) return;
-                          await Navigator.push(
-                            context,
+                          try{
+                            await ctx.push(
                             MaterialPageRoute(
-                              builder: (context) => AddJumpForm(
+                              builder: (_) => AddJumpForm(
                                 existingJump: jump,
                                 onSave: (updatedJump) async {
-                                  await JumpLogDatabase.updateJump(updatedJump);
+                                  await JumpLogDatabase.updateJumpAndRecalculate(updatedJump,);
+                                  lastJumpNumberNotifier.value = await JumpLogDatabase.getLastJumpNumber();
+                                  lastTotalFreefallNotifier.value = await JumpLogDatabase.getLastTotalFreefall();
+                                  messenger.showSnackBar(const SnackBar(content: Text('✅ Salto editado')),);
                                   await _refreshJumps();
                                 },
                               ),
                             ),
                           );
+                          }catch(error){if (!mounted) return;
+                                        messenger.showSnackBar(SnackBar(content: Text('❌ No se puedo editar el salto: $error')),);
+                                        }
+                        } else if (action == 'Favoritos'){
+                          try{await JumpLogDatabase.favorite(jump.id);
+                              messenger.showSnackBar(const SnackBar(content: Text('✅ Salto Favorito')),);
+                              await _refreshJumps();
+                              }catch(error){messenger.showSnackBar(SnackBar(content: Text('❌ No se puedo marcar como favorito el salto: $error')),);}
                         }
                       },
                     );
@@ -173,30 +187,23 @@ class _LogbookPageState extends State<LogbookPage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          final scaffoldContext = context; // Guardar contexto local
-
           await Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) {
+                final messenger = ScaffoldMessenger.of(context);
                 return AddJumpForm(
                   onSave: (jump) async {
                     try {
-                      if (jump.id != null) {
-                        await JumpLogDatabase.updateJumpAndRecalculate(jump);
-                      } else {
-                        await JumpLogDatabase.insertJump(jump);
-                      }
+                      await JumpLogDatabase.insertJump(jump);
                       // 🔹 Actualizar el ValueNotifier con el último salto
-                      lastJumpNumberNotifier.value =
-                          await JumpLogDatabase.getLastJumpNumber();
-
+                      lastJumpNumberNotifier.value = await JumpLogDatabase.getLastJumpNumber();
+                      lastTotalFreefallNotifier.value = await JumpLogDatabase.getLastTotalFreefall();
                       // 🔹 Señalar que Home debe recargar
                       await _refreshJumps();
                     } catch (error) {
                       if (!mounted) return;
-
-                      ScaffoldMessenger.of(scaffoldContext).showSnackBar(
+                      messenger.showSnackBar(
                         SnackBar(
                           content: Text(
                             '❌ Ocurrió un error al guardar el salto. $error',

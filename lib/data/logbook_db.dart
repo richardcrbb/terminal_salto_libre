@@ -355,5 +355,23 @@ static Future<List<JumpLog>> getJumpsWithLastDate() async {
   }
 }
 
+//funcion para marcar un salto como favorito
+
+static Future<void> favorite(int? id) async {
+    final db = await database;
+     await db.rawUpdate('''
+      UPDATE jumps 
+      SET favorites = CASE favorites WHEN 0 THEN 1 ELSE 0 END
+      WHERE id = ?
+    ''', [id]);
+  }
+
+//funcion para extraer una lista de saltos favoritos de mi base de datos
+static Future<List<JumpLog>> favList()async{
+  final db = await database;
+  final result = await db.query('jumps', orderBy: 'id DESC', where: 'favorites = ?', whereArgs: [1]);
+    return result.map((map) => JumpLog.fromMap(map)).toList();
+}
+
 
 }
