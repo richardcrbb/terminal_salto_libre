@@ -40,15 +40,37 @@ class JumpLogDatabase {
         await db.execute('''
             CREATE TABLE settings (
               key TEXT PRIMARY KEY,
-              value INTEGER,
-              previousFreefall INTEGER
+              previousJumps INTEGER,
+              previousFreefall INTEGER,
+              previousTandems INTEGER,
+              previousAffs INTEGER,
+              previousCameras INTEGER,
+              previousCoaches INTEGER,
+              previousFunJumps INTEGER
             )
           ''');
 
         await db.insert('settings', {
-          'key': 'startingJumpNumber',
-          'value': 0,
+          'key': 'previousInfo',
+          'previousJumps': 0,
           'previousFreefall': 0,
+          'previousTandems': 0,
+          'previousAffs':0,
+          'previousCameras':0,
+          'previousCoaches':0,
+          'previousFunJumps':0,
+        });
+
+        await db.execute('''
+            CREATE TABLE unitsystem (
+              key TEXT PRIMARY KEY,
+              boolValue INTEGER
+            )
+          ''');
+        await db.insert('unitsystem', {
+          'key': 'imperialSystem',
+          'boolValue': 1,
+
         });
       },
       onUpgrade: (db, oldVersion, newVersion) async {
@@ -109,7 +131,8 @@ class JumpLogDatabase {
   // Funcion que actualiza saltos previos y caida libre previa en la tabla settigns que por defecto esta en 0
   // tambien puede actualizar los datos que se le ingresan a settings, eso si antes de insertar un nuevo salto en jumps.
 
-  static Future<void> savePreviousSettings(int saltosPrevios, int caidaLibrePrevia) async {
+  static Future<void> savePreviousSettings(SettingsLog settingsLog )async {
+  
   final db = await database;
 
   // Verificar si la tabla jumps está vacía
@@ -118,23 +141,20 @@ class JumpLogDatabase {
 
   if (count > 0) {
     // Si hay registros en jumps, no permitir guardar
-    throw Exception('❌ Ya no se puede insertar saltos previos');
+    throw Exception('❌ Ya hay saltos registrados en esta bitacora digital.');
   }
 
   // Actualizar los valores en settings
   await db.update(
     'settings',
-    {
-      'value': saltosPrevios,
-      'previousFreefall': caidaLibrePrevia,
-    },
+    settingsLog.toMap(),
     where: 'key = ?',
-    whereArgs: ['startingJumpNumber'],
+    whereArgs: ['previousInfo'],
   );
   }
 
   //. ELIMINAR
-  //Funcion para eliminar un registro y actualizar el jumpnumber
+  //Funcion para eliminar un registro y actualizar el jumpNumber
   // ✅ Elimina un salto y recalcula jumpNumber y totalFreefall de los posteriores
 static Future<void> deleteJumpByNumber(int jumpNumber) async {
   final db = await database;
@@ -150,12 +170,12 @@ static Future<void> deleteJumpByNumber(int jumpNumber) async {
   if (anteriorRes.isNotEmpty) {
     totalAcumulado = anteriorRes.first['totalFreefall'] as int;
   } else {
-    // Si no hay salto anterior, tomar de settings
+    // Si no hay salto anterior[es porque anteriorRes devolvio una lista vacia al no encontrar salto anterior], tomar de settings
     final settings = await db.query(
       'settings',
       columns: ['previousFreefall'],
       where: 'key = ?',
-      whereArgs: ['startingJumpNumber'],
+      whereArgs: ['previousInfo'],
     );
     totalAcumulado = (settings.first['previousFreefall'] as int?) ?? 0;
   }
@@ -212,16 +232,16 @@ static Future<void> deleteJumpByNumber(int jumpNumber) async {
     final count = countResult.first['count'] as int;
 
     if (count == 0) {
-      // Si 'jumps 'está vacía, obtener el valor de startingJumpNumber en 'settings'
+      // Si 'jumps 'está vacía, obtener el valor de previousInfo en 'settings'
       final settingsResult = await db.query(
         'settings',
-        columns: ['value'],
+        columns: ['previousJumps'],
         where: 'key = ?',
-        whereArgs: ['startingJumpNumber'],
+        whereArgs: ['previousInfo'],
       );
 
       if (settingsResult.isNotEmpty) {
-        return settingsResult.first['value'] as int; 
+        return settingsResult.first['previousJumps'] as int; 
       }
       return 0; // Si no existe en 'settings', devolver 0 por defecto
     }
@@ -250,7 +270,7 @@ static Future<void> deleteJumpByNumber(int jumpNumber) async {
         'settings',
         columns: ['previousFreefall'], //columna de la tabla
         where: 'key = ?',
-        whereArgs: ['startingJumpNumber'], // fila de la tabla
+        whereArgs: ['previousInfo'], // fila de la tabla
       );
 
       if (settingsResult.isNotEmpty) {
@@ -338,45 +358,88 @@ static Future<List<JumpLog>> getJumpsWithLastDate() async {
     return counts;
   }
 
-//. FAVORITO
-// Funcion para marcar un salto como favorito
+  //.Objeto SettingsLog
 
-static Future<void> favorite(int? id) async {
-    final db = await database;
-     await db.rawUpdate('''
-      UPDATE jumps 
-      SET favorites = CASE favorites WHEN 0 THEN 1 ELSE 0 END
-      WHERE id = ?
-    ''', [id]);
+  static Future<SettingsLog> getSettingsLog ()async{
+    final Database db = await database;
+    List<Map<String,dynamic>> log = await db.query('settings',
+    where: 'key=?',
+    whereArgs: ['previousInfo']);
+    
+    SettingsLog slog = SettingsLog.fromMap(log.first);
+
+    return slog;
+
   }
 
-//. LISTA de favoritos
-// Funcion para extraer una lista de saltos favoritos de mi base de datos
-static Future<List<JumpLog>> favList()async{
-  final db = await database;
-  final result = await db.query('jumps', orderBy: 'id DESC', where: 'favorites = ?', whereArgs: [1]);
-    return result.map((map) => JumpLog.fromMap(map)).toList();
-}
+  //. set FAVORITO
+  // Funcion para marcar un salto como favorito
 
+  static Future<void> favorite(int? id) async {
+      final db = await database;
+      await db.rawUpdate('''
+        UPDATE jumps 
+        SET favorites = CASE favorites WHEN 0 THEN 1 ELSE 0 END
+        WHERE id = ?
+      ''', [id]);
+    }
 
-//!
-// ? Metodos que no son necesarios 
-/*  
-   static Future<int> updateJump(JumpLog log) async {
+  //. LISTA de favoritos
+  // Funcion para extraer una lista de saltos favoritos de mi base de datos
+  static Future<List<JumpLog>> favList()async{
     final db = await database;
-    return await db.update(
-      'jumps',
-      log.toMap(),
-      where: 'id = ?',
-      whereArgs: [log.id],
+    final result = await db.query('jumps', orderBy: 'id DESC', where: 'favorites = ?', whereArgs: [1]);
+      return result.map((map) => JumpLog.fromMap(map)).toList();
+  }
+
+  //. Imperial System
+
+  static Future<int> isImperialSystem()async{
+    
+    final Database db = await database;
+    
+    final List<Map<String,dynamic>> isImperialSystemQuery = await db.query('unitsystem', 
+    columns: ['boolValue'],
+    where: 'key=?',
+    whereArgs: ['imperialSystem'],
     );
+
+    if(isImperialSystemQuery.isNotEmpty){
+    return isImperialSystemQuery.first['boolValue'] as int;}
+
+    return 0;
   }
-  
-  static Future<int> deleteJump(int id) async {
-    final db = await database; 
-    return await db.delete('jumps', where: 'id = ?', whereArgs: [id]);
+
+  //. update Imperial System
+
+  static Future<void> updateImperialSystem (int bool) async {
+    final Database db = await database;
+    db.update('unitsystem',
+    {'boolValue':bool},
+    where: 'key=?',
+    whereArgs: ['imperialSystem'],
+    conflictAlgorithm: ConflictAlgorithm.replace,);
   }
-  
-*/
+
+
+  //!
+  // ? Metodos que no son necesarios 
+  /*  
+    static Future<int> updateJump(JumpLog log) async {
+      final db = await database;
+      return await db.update(
+        'jumps',
+        log.toMap(),
+        where: 'id = ?',
+        whereArgs: [log.id],
+      );
+    }
+    
+    static Future<int> deleteJump(int id) async {
+      final db = await database; 
+      return await db.delete('jumps', where: 'id = ?', whereArgs: [id]);
+    }
+    
+  */
 
 }

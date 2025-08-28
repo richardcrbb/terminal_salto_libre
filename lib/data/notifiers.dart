@@ -7,3 +7,6 @@ ValueNotifier<bool> darkMode = ValueNotifier(true);
 //Info del ultimo salto
 ValueNotifier<int> lastJumpNumberNotifier = ValueNotifier(0);
 ValueNotifier<int> lastTotalFreefallNotifier = ValueNotifier(0);
+
+//Notifier de sistema de unidades.
+ValueNotifier<bool> isImperialSystemNotifier =ValueNotifier(true);

@@ -212,6 +212,7 @@ class _AddJumpFormState extends State<AddJumpForm> {
           key: _formKey,
           child: ListView(
             children: [
+//. Numero de salto.              
               ValueListenableBuilder<int>(
                 valueListenable: lastJumpNumberNotifier,
                 builder:
@@ -220,7 +221,6 @@ class _AddJumpFormState extends State<AddJumpForm> {
                         _jumpNumberController.text = (ultimoSalto + 1)
                             .toString();
                       } // asigna numero de salto, solo si un salto nuevo
-//. Numero de salto.
                       return TextFormField(
                         controller: _jumpNumberController,
                         readOnly: true, // Si es un salto editado al cargar datos de ruta se asigna el numero de salto.

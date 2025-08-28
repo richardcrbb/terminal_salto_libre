@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 
+//!  Clase JumpLog                                                                                                         
 
 class JumpLog {
   final int? id;
@@ -77,6 +78,57 @@ class JumpLog {
     );
   }
 }
+
+//!   Clase SettingsLog                                                                                                        
+
+class SettingsLog{
+  
+  int previousJumps; 
+  int previousFreefall; 
+  int previousTandems; 
+  int previousAffs; 
+  int previousCameras; 
+  int previousCoaches; 
+  int previousFunJumps;
+
+  SettingsLog({
+    required this.previousJumps,
+    required this.previousFreefall,
+    required this.previousTandems,
+    required this.previousAffs,
+    required this.previousCameras,
+    required this.previousCoaches,
+    required this.previousFunJumps,
+  });
+
+  Map<String,dynamic>  toMap(){
+    return {
+      'previousJumps':previousJumps,
+      'previousFreefall':previousFreefall,
+      'previousTandems':previousTandems,
+      'previousAffs':previousAffs,
+      'previousCameras':previousCameras,
+      'previousCoaches':previousCoaches,
+      'previousFunJumps':previousFunJumps,
+    };
+  }
+  
+  static SettingsLog fromMap(Map<String,dynamic> json){
+    return SettingsLog(
+      previousJumps: json['previousJumps'],
+      previousFreefall: json['previousFreefall'],
+      previousTandems: json['previousTandems'],
+      previousAffs: json['previousAffs'],
+      previousCameras: json['previousCameras'],
+      previousCoaches: json['previousCoaches'],
+      previousFunJumps: json['previousFunJumps'],
+      );
+  }
+  
+  
+}
+
+//!      Estilo de Texo 'titulo'                                                                                                     
 
 const TextStyle titulo = TextStyle(fontWeight: FontWeight.bold, fontSize: 30.0);
 
