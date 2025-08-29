@@ -20,6 +20,8 @@ class _SettingsPageState extends State<SettingsPage> {
   final TextEditingController _previousCameras = TextEditingController();
   final TextEditingController _previousCoaches = TextEditingController();
   final TextEditingController _previousFunJumps = TextEditingController();
+  
+  final TextEditingController _dzAltitudeController = TextEditingController();
 
   @override
   void initState(){
@@ -40,7 +42,7 @@ class _SettingsPageState extends State<SettingsPage> {
     super.dispose();
   }
 
-  //. Funcion para crear objeto initSettingsLog y asignarlo en la carga de la ruta.
+  //. Funcion para crear objeto initSettingsLog y asignarlo en la carga de la ruta.  Tambien traer dzAltura de db
   Future<void> _loadSettings() async {
     SettingsLog log = await JumpLogDatabase.getSettingsLog();
       _previousJumps.text = log.previousJumps.toString();
@@ -50,6 +52,8 @@ class _SettingsPageState extends State<SettingsPage> {
       _previousCameras.text = log.previousCameras.toString();
       _previousCoaches.text = log.previousCoaches.toString();
       _previousFunJumps.text = log.previousFunJumps.toString();
+    int altitud = await JumpLogDatabase.getDzAltitude();
+      _dzAltitudeController.text = altitud.toString();
     }
 
   //. Funcion para crear objeto SettingLog para guardarlo en db
@@ -175,6 +179,18 @@ class _SettingsPageState extends State<SettingsPage> {
                             );
                 },
               ),
+              TextField(
+                controller: _dzAltitudeController,
+                keyboardType: TextInputType.numberWithOptions(),
+                decoration: InputDecoration(labelText: 'DZ Altitude en metros.'),
+                onEditingComplete: () async {
+                  ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+                  try{
+                    int updated = await JumpLogDatabase.setDzAltitude(int.tryParse(_dzAltitudeController.text) ?? 0);
+                    if(updated == 1){messenger.showSnackBar(SnackBar(content: Text('✅ Se actualizo con exito la altura del DZ.')));}
+                  }catch(error){messenger.showSnackBar(SnackBar(content: Text('❌ Error: $error')));}
+                },
+              )
             ],
           ),
         ),

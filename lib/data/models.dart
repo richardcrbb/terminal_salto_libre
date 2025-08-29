@@ -1,5 +1,5 @@
-import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter/material.dart';
 
 //!  Clase JumpLog                                                                                                         
 
@@ -145,3 +145,34 @@ const List<String> jumpTypeList = [
   final dateTime = DateTime.parse(fechaISO);
   return DateFormat('dd/MMM/yyyy').format(dateTime);
   }
+
+
+
+
+
+
+//!      Estilo de widget Altimetro                                                                                                     
+  class AltitudeText extends StatelessWidget {
+    final String text;
+
+    const AltitudeText({super.key, required this.text});
+
+    @override
+    Widget build(BuildContext context) {
+      return Container(
+        width: double.infinity, // ocupa todo el ancho
+        alignment: Alignment.center, // centra el texto horizontalmente
+        padding: const EdgeInsets.symmetric(vertical: 16), // opcional: separación vertical
+        child: Text(
+          text,
+          textAlign: TextAlign.center, // asegura centrado en múltiples líneas
+          style: const TextStyle(
+            fontSize: 150, // tamaño grande para que destaque
+            fontWeight: FontWeight.bold,
+            color: Colors.white60, // puedes cambiar el color si quieres
+          ),
+        ),
+      );
+    }
+  }
+

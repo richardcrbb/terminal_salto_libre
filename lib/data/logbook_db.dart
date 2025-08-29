@@ -67,11 +67,24 @@ class JumpLogDatabase {
               boolValue INTEGER
             )
           ''');
+        
         await db.insert('unitsystem', {
           'key': 'imperialSystem',
           'boolValue': 1,
-
         });
+
+        await db.execute('''
+            CREATE TABLE dzaltitude(
+              key TEXT PRIMARY KEY,
+              altitude INTEGER
+            )''');
+        
+        await db.insert('dzaltitude',{
+          'key': 'dz',
+          'altitude': 0,
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace
+        );
       },
       onUpgrade: (db, oldVersion, newVersion) async {
               },
@@ -419,6 +432,29 @@ static Future<List<JumpLog>> getJumpsWithLastDate() async {
     where: 'key=?',
     whereArgs: ['imperialSystem'],
     conflictAlgorithm: ConflictAlgorithm.replace,);
+  }
+
+  //. update dzaltitude
+
+  static Future<int> setDzAltitude (int altitude) async{
+    final Database db = await database;
+    return await db.update('dzaltitude', {
+      'altitude': altitude},
+      where: 'key = ?',
+      whereArgs: ['dz'],
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  //. get dzaltitude
+
+  static Future<int> getDzAltitude () async{
+    Database db = await database;
+    List<Map<String, dynamic>> result = await db.query('dzaltitude',where: 'key = ?',whereArgs: ['dz']);
+    if(result.isNotEmpty){
+      return result.first['altitude'] as int;
+    }
+    return 0;
   }
 
 
