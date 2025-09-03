@@ -10,3 +10,6 @@ ValueNotifier<int> lastTotalFreefallNotifier = ValueNotifier(0);
 
 //Notifier de sistema de unidades.
 ValueNotifier<bool> isImperialSystemNotifier =ValueNotifier(true);
+
+//Registro de posicion y tiempo
+ValueNotifier<bool> isTracking =ValueNotifier(false);

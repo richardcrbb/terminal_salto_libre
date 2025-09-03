@@ -1,3 +1,6 @@
+                                                //!logbook_db.dart
+
+
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:terminal_salto_libre/data/models.dart';
@@ -17,6 +20,10 @@ class JumpLogDatabase {
     return await openDatabase(
       path,
       version: 1,
+      onConfigure: (db) async {
+        // Muy importante: activar enforcement de foreign keys
+        await db.execute('PRAGMA foreign_keys = ON');
+      },
       onCreate: (db, version) async {
         await db.execute('''
             CREATE TABLE jumps (
@@ -85,6 +92,24 @@ class JumpLogDatabase {
           },
           conflictAlgorithm: ConflictAlgorithm.replace
         );
+
+        await db.execute('''
+            CREATE TABLE IF NOT EXISTS posalti (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              jump_id INTEGER NOT NULL,
+              lat REAL,
+              lon REAL,
+              alt REAL,
+              timestamp INTEGER,
+              FOREIGN KEY (jump_id) REFERENCES jumps (id) ON DELETE CASCADE
+            );
+          ''');
+
+          await db.execute('''
+            CREATE INDEX IF NOT EXISTS idx_posalti_jump_id 
+            ON posalti (jump_id);
+          ''');
+
       },
       onUpgrade: (db, oldVersion, newVersion) async {
               },
@@ -102,6 +127,29 @@ class JumpLogDatabase {
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
+
+  //. INSERTAR POSICION Y ALTITUD EN 'PosAlti'
+  static Future<int> insertPosAlti({
+  required int jumpId,
+  required double lat,
+  required double lon,
+  required double alt,
+  required int timestamp,
+  }) async {
+  final db = await database;
+  return await db.insert(
+    'posalti',
+    {
+      'jump_id': jumpId,
+      'lat': lat,
+      'lon': lon,
+      'alt': alt,
+      'timestamp': timestamp,
+    },
+    conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
 
   //. ACTUALIZAR en jumps
   // Funcion para actualizar un salto y recalcular datos de freefall posteriores
@@ -455,6 +503,16 @@ static Future<List<JumpLog>> getJumpsWithLastDate() async {
       return result.first['altitude'] as int;
     }
     return 0;
+  }
+
+  //. obtener puntos de posalti
+
+  static Future<List<Map<String,dynamic>>> getPointsOfJump (int jumpId) async{
+    final Database db = await database;
+    List<Map<String,dynamic>> result = await db.query('posalti',
+    where: "jump_id = ?",
+    whereArgs: [jumpId]);
+    return result;
   }
 
 

@@ -1,8 +1,11 @@
+                                                          //!logbook.dart
+
 import 'package:flutter/material.dart';
 import 'package:terminal_salto_libre/data/logbook_db.dart';
 import 'package:terminal_salto_libre/data/models.dart'; // aquí está JumpLog
 import 'package:terminal_salto_libre/data/notifiers.dart';
 import 'package:terminal_salto_libre/screens/pages/add_jump.dart';
+import 'package:terminal_salto_libre/screens/pages/altimeter.dart';
 
 class LogbookPage extends StatefulWidget {
   const LogbookPage({super.key});
@@ -80,11 +83,12 @@ class _LogbookPageState extends State<LogbookPage> {
                       onLongPress: () async {
                         final messenger = ScaffoldMessenger.of(context,); //guarda la ruta hacia ScaffoldMessenger
                         final ctx = Navigator.of(context,); //guarda la ruta hacia Nav que maneja que pantalla se proyecta.
+                        
 
                         final action = await showDialog<String>(
                           context: context,
                           builder: (BuildContext dialogContext) {
-//. Esta caja saca una pantalla nueva con tres opciones {EDITAR, ELIMINAR, FAVORITOS}.
+//. Esta caja saca una pantalla nueva con tres opciones {EDITAR, ELIMINAR, FAVORITOS, Iniciar tracking y Detener tracking}.
                             return AlertDialog(
                               title: const Text('Acciones'),
                               content: const Text(
@@ -105,6 +109,10 @@ class _LogbookPageState extends State<LogbookPage> {
                                   onPressed: () =>
                                       Navigator.pop(dialogContext, 'Favoritos'),
                                   child: const Text('Favoritos'),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.pop(dialogContext, 'StartTracking'),
+                                  child: const Text('Iniciar Tracking'),
                                 ),
                               ],
                             );
@@ -155,6 +163,22 @@ class _LogbookPageState extends State<LogbookPage> {
                               messenger.showSnackBar(const SnackBar(content: Text('✅ Salto Favorito')),);
                               await _refreshJumps();
                               }catch(error){messenger.showSnackBar(SnackBar(content: Text('❌ No se puedo marcar como favorito el salto: $error')),);}
+                        }
+//. En esta seccion se empieza a guardar el registro de posicion altitud y tiempo del salto.
+                        else if (action == 'StartTracking') {
+                          final List<Map<String,dynamic>> puntos = await JumpLogDatabase.getPointsOfJump(jump.id!);
+                          if (puntos.isEmpty){
+                            try{
+                              // Aquí pasas el jump.id a AltimeterPage
+                            ctx.push(
+                              MaterialPageRoute(
+                                builder: (_) {
+                                  isTracking.value = true;
+                                  return AltimeterPage(jumpId: jump.id,);},
+                              ),
+                            );
+                            }catch(e){messenger.showSnackBar(SnackBar(content: Text('$e'),),);}
+                          } else {messenger.showSnackBar(SnackBar(content: Text('❌ este salto ya cuenta con puntos de posicion registrados.'),),);}
                         }
                       },
                     );

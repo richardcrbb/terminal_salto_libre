@@ -146,8 +146,9 @@ const List<String> jumpTypeList = [
   return DateFormat('dd/MMM/yyyy').format(dateTime);
   }
 
+//!      Estilo de Texo 'titulo'                                                                                                     
 
-
+const TextStyle subtitulo = TextStyle(fontSize: 18, color: Colors.white70);
 
 
 
@@ -163,15 +164,16 @@ const List<String> jumpTypeList = [
         width: double.infinity, // ocupa todo el ancho
         alignment: Alignment.center, // centra el texto horizontalmente
         padding: const EdgeInsets.symmetric(vertical: 16), // opcional: separación vertical
-        child: Text(
+        child: Center(child: Text(
           text,
           textAlign: TextAlign.center, // asegura centrado en múltiples líneas
           style: const TextStyle(
-            fontSize: 150, // tamaño grande para que destaque
+            fontSize: 180, // tamaño grande para que destaque
             fontWeight: FontWeight.bold,
             color: Colors.white60, // puedes cambiar el color si quieres
+            height: 1 
           ),
-        ),
+        ),)
       );
     }
   }
