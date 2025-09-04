@@ -26,7 +26,7 @@ class _AltimeterPageState extends State<AltimeterPage> {
   int _segundos = 0;
   late Timer? _timer;
   late StreamSubscription<Position>? _positionStream;
-  late final int dzaltitude;
+  late final int landingAltitude;
   //late VoidCallback _trackingListener;
   void _trackingListener(){
     if (isTracking.value) {
@@ -43,7 +43,7 @@ class _AltimeterPageState extends State<AltimeterPage> {
   initState(){
     super.initState();
     _checkPermissions();
-    _obtenerDzAltitude().then((value) => _trackingListener(),);
+    _obtenerLandingAltitude().then((value) => _trackingListener(),);
     isTracking.addListener(_trackingListener);
     
 
@@ -73,16 +73,16 @@ class _AltimeterPageState extends State<AltimeterPage> {
       locationSettings: settings,
     );
     setState(() {
-       alt= position.altitude -dzaltitude;
+       alt= position.altitude - landingAltitude;
     });
   }
 
-  //. Funcion para obtener DZ Altitude
+  //. Funcion para obtener Landing Altitude
 
-  Future<void> _obtenerDzAltitude () async{
-    int dzaltitude = await JumpLogDatabase.getDzAltitude();
+  Future<void> _obtenerLandingAltitude () async{
+    int landingAltitude = await JumpLogDatabase.getLandingAltitude();
     setState(() {
-      this.dzaltitude=dzaltitude;
+      this.landingAltitude=landingAltitude;
     });
   }
 
@@ -96,7 +96,7 @@ class _AltimeterPageState extends State<AltimeterPage> {
       ),
     ).listen((Position position) async {
      try{
-      alt = position.altitude - dzaltitude;
+      alt = position.altitude - landingAltitude;
       lon = position.longitude;
       lat = position.latitude;
 

@@ -27,6 +27,7 @@ class _AddJumpFormState extends State<AddJumpForm> {
   bool _inicializando = true;
 
   //. Controladores
+  final ValueNotifier<String> _deporteNotifier = ValueNotifier('skydiving');
   final _jumpNumberController = TextEditingController();
   final _dateController = TextEditingController();
   final _locationController = TextEditingController(text: "Cali");
@@ -212,6 +213,15 @@ class _AddJumpFormState extends State<AddJumpForm> {
           key: _formKey,
           child: ListView(
             children: [
+//. Tipo de deporte.                            
+              ValueListenableBuilder(
+                valueListenable: _deporteNotifier,  
+                builder: (BuildContext context, String dep, Widget? child) {
+                  return  DropdownButtonFormField(value: dep ,items: deporte.map((e) {
+                    return DropdownMenuItem(value:e, child: Text(e));
+                  },).toList(), onChanged: (value) => _deporteNotifier.value = value!,);
+                },
+              ),
 //. Numero de salto.              
               ValueListenableBuilder<int>(
                 valueListenable: lastJumpNumberNotifier,

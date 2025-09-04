@@ -79,9 +79,9 @@ class JumpLog {
   }
 }
 
-//!   Clase SettingsLog                                                                                                        
+//!   Clase SettingsSkydivingLog                                                                                                        
 
-class SettingsLog{
+class SettingsSkydivingLog{
   
   int previousJumps; 
   int previousFreefall; 
@@ -91,7 +91,7 @@ class SettingsLog{
   int previousCoaches; 
   int previousFunJumps;
 
-  SettingsLog({
+  SettingsSkydivingLog({
     required this.previousJumps,
     required this.previousFreefall,
     required this.previousTandems,
@@ -113,8 +113,8 @@ class SettingsLog{
     };
   }
   
-  static SettingsLog fromMap(Map<String,dynamic> json){
-    return SettingsLog(
+  static SettingsSkydivingLog fromMap(Map<String,dynamic> json){
+    return SettingsSkydivingLog(
       previousJumps: json['previousJumps'],
       previousFreefall: json['previousFreefall'],
       previousTandems: json['previousTandems'],
@@ -128,10 +128,62 @@ class SettingsLog{
   
 }
 
+//!   Clase SettingsBasejumpLog                                                                                                        
+
+ class SettingsBasejumpLog {
+  int previousJumps;
+  int previousFreefall;
+  int previousAsisted;
+  int previousBelly;
+  int previousTARD;
+  int previousFreefly;
+  int previousTracking;
+  int previousWingsuit;
+
+  SettingsBasejumpLog({
+  required this.previousJumps,
+  required this.previousFreefall,
+  required this.previousAsisted,
+  required this.previousBelly,
+  required this.previousTARD,
+  required this.previousFreefly,
+  required this.previousTracking,
+  required this.previousWingsuit,
+  });
+
+  Map<String,dynamic> toMap (){
+    return{
+      'previousJumps': previousJumps,
+      'previousFreefall': previousFreefall,
+      'previousAsisted': previousAsisted,
+      'previousBelly': previousBelly,
+      'previousTARD': previousTARD,
+      'previousFreefly': previousFreefly,
+      'previousTracking': previousTracking,
+      'previousWingsuit': previousWingsuit,
+    };
+  }
+
+  static SettingsBasejumpLog fromMap (Map<String,dynamic> json){
+    return SettingsBasejumpLog(
+      previousJumps: json['previousJumps'],
+      previousFreefall: json['previousFreefall'],
+      previousAsisted: json['previousAsisted'],
+      previousBelly: json['previousBelly'],
+      previousTARD: json['previousTARD'],
+      previousFreefly: json['previousFreefly'],
+      previousTracking: json['previousTracking'],
+      previousWingsuit: json['previousWingsuit'],
+      );
+  }
+ }
+
 //!      Estilo de Texo 'titulo'                                                                                                     
 
 const TextStyle titulo = TextStyle(fontWeight: FontWeight.bold, fontSize: 30.0);
 
+
+//!      Listado de tipo de salto.                                                                                                    
 const List<String> jumpTypeList = [
   'Tandem',
   'AFF',
@@ -140,13 +192,30 @@ const List<String> jumpTypeList = [
   'Fun Jump',
 ];
 
-  String formatearFecha(String fechaISO) {
+//!      Listado de tipo de salto en BASEJUMP.                                                                                                    
+const List<String> jumpTypeListInBase = [
+  'previousAsisted',
+  'previousBelly',
+  'previousTARD',
+  'previousFreefly',
+  'previousTracking',
+  'previousWingsuit',
+];
+
+
+//!      Listado de deporte                                                                                                             
+
+List<String> deporte =['skydiving','basejump'];
+
+//!      Formato de fecha                                                                                                            
+String formatearFecha(String fechaISO) {
   // Si jump.date ya es un String ISO, lo convertimos a DateTime
   final dateTime = DateTime.parse(fechaISO);
   return DateFormat('dd/MMM/yyyy').format(dateTime);
   }
 
-//!      Estilo de Texo 'titulo'                                                                                                     
+
+//!      Estilo de Texo 'subtitulo' de altimetro                                                                                        
 
 const TextStyle subtitulo = TextStyle(fontSize: 18, color: Colors.white70);
 
