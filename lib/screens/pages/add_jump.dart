@@ -7,10 +7,11 @@ import 'package:terminal_salto_libre/data/shared_functions.dart';
 class AddJumpForm extends StatefulWidget {
   
   //data que se recibe de la ruta logbook
+  final int index;
   final JumpLog? existingJump;
   final void Function(JumpLog) onSave;
   
-  const AddJumpForm({super.key, required this.onSave, this.existingJump});
+  const AddJumpForm({super.key, required this.onSave, this.existingJump, required this.index});
 
   @override
   State<AddJumpForm> createState() => _AddJumpFormState();
@@ -21,36 +22,39 @@ class _AddJumpFormState extends State<AddJumpForm> {
 
   //. Variable interna para manejar fecha real
   DateTime _selectedDate = DateTime.now();
-  final _dateFormat = DateFormat('dd-MMM-yyyy'); // formato para mostrar mis fechas
+  final DateFormat _dateFormat = DateFormat('dd-MMM-yyyy'); // formato para mostrar mis fechas
 
   //. Variable para saber si esta inicializando la pagina de edicion:
   bool _inicializando = true;
 
+  //. Callbacks de listeners para tenerlos como referencia
+  VoidCallback _freefallDelayListener1 = (){};
+  VoidCallback _freefallDelayListener2 = (){};
+
   //. Controladores
-  final ValueNotifier<String> _deporteNotifier = ValueNotifier('skydiving');
   final _jumpNumberController = TextEditingController();
   final _dateController = TextEditingController();
-  final _locationController = TextEditingController(text: "Cali");
-  final _aircraftController = TextEditingController(text: "PA-32");
-  final _equipmentController = TextEditingController(text: "Sigma-340");
-  final _altitudeController = TextEditingController(text: "8500");
-  final _freefallDelayController = TextEditingController(text: "25");
+  final _locationController = TextEditingController();
+  final _aircraftController = TextEditingController();
+  final _equipmentController = TextEditingController();
+  final _altitudeController = TextEditingController();
+  final _freefallDelayController = TextEditingController();
   final _totalFreefallController = TextEditingController();
   final _totalFreefallControllerEdited = TextEditingController();
   final ValueNotifier<String> _jumpTypeNotifier = ValueNotifier('Tandem');
-  final _weightController = TextEditingController(text: '80');
+  final _weightController = TextEditingController();
   final _ageController = TextEditingController();
-  final _descriptionController = TextEditingController(text: "Tandem con ");
+  final _descriptionController = TextEditingController();
   final _signatureController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
 
-    //. Controladores iniciales si es un salto existente
-    if (widget.existingJump != null) {
+    //. Controladores iniciales si es un salto existente en paracaidismo
+    if (widget.index == 0 && widget.existingJump != null) {
       
-      final jump = widget.existingJump!;//guardamos el salto que estamos editando en una variable de esta clase.
+      final jump = widget.existingJump!;//guardamos el salto que estamos editando en una variable de esta funcion.
       
       _selectedDate = DateTime.parse(jump.date); // guarda fecha que viene del salto que estamos editando
       
@@ -69,19 +73,22 @@ class _AddJumpFormState extends State<AddJumpForm> {
       _descriptionController.text = jump.description;
       _signatureController.text = jump.signature;
 
-      // Listener que solo recalcula si cambia el delay
-      _freefallDelayController.addListener(() {
-         if (_inicializando) return; // ✅ evita recalcular en la carga inicial.
-        _actualizarTotalFreefall(
-          baseHistorica: jump.totalFreefall! - jump.freefallDelay,// argumento de funcion, sirve para mantener base histórica, le resta lo que le habia sumado en la primera insercion del salto
-          delay: int.tryParse(_freefallDelayController.text) ?? 0, //argumento de funcion
-        );
-      });
+       // Asignamos el callback en el listener como una referencia
+      _freefallDelayListener1 = () {
+      if (_inicializando) return;// ✅ evita recalcular en la carga inicial.
+      _actualizarTotalFreefall(
+        baseHistorica: jump.totalFreefall! - jump.freefallDelay,// argumento de funcion, sirve para mantener base histórica, le resta lo que le habia sumado en la primera insercion del salto
+        delay: int.tryParse(_freefallDelayController.text) ?? 0,//argumento de funcion
+      );
+      };
+      
+      //Llamamos el callback.
+      _freefallDelayController.addListener(_freefallDelayListener1);
 
     } 
     
-    //. Valores por defecto (como tenías antes)
-    else {
+    //. Valores por defecto skydiving
+    else if(widget.index == 0 && widget.existingJump == null){
       _dateController.text = _dateFormat.format(_selectedDate);
       _locationController.text = "Cali";
       _aircraftController.text = "PA-32";
@@ -95,10 +102,72 @@ class _AddJumpFormState extends State<AddJumpForm> {
       
       _calcularTotalFreefall(); //esta funcion evalua el totalfreefall y lo asigna a su respectivo controller teniendo en cuenta el notifier de totalfreefall
 
-      _freefallDelayController.addListener(() {
-        _calcularTotalFreefall();
-      }); //esta funcion escucha cambios en el delay y recalcula el totalfreefall y lo reasigna al controller teniendo en cuenta el notifier de totalfreefall
+
+      // Asignamos el callback
+      _freefallDelayListener2 = () {
+      _calcularTotalFreefall();//esta funcion escucha cambios en el delay y recalcula el totalfreefall y lo reasigna al controller teniendo en cuenta el notifier de totalfreefall
+      };
+      // Llamamos el callback del listener2
+      _freefallDelayController.addListener(_freefallDelayListener2);
     }
+
+    //. Controladores iniciales si es un salto existente en basejump
+    if (widget.index == 1 && widget.existingJump != null) {
+      
+      final jump = widget.existingJump!;//guardamos el salto que estamos editando en una variable de esta funcion.
+      
+      _selectedDate = DateTime.parse(jump.date); // guarda fecha que viene del salto que estamos editando
+      
+      _jumpNumberController.text = jump.jumpNumber.toString();
+      _dateController.text = _dateFormat.format(_selectedDate);
+      _locationController.text = jump.location;
+      _aircraftController.text = jump.aircraft;
+      _equipmentController.text = jump.equipment;
+      _altitudeController.text = jump.altitude.toString();
+      _freefallDelayController.text = jump.freefallDelay.toString();
+      _totalFreefallController.text = jump.totalFreefall.toString();
+      _totalFreefallControllerEdited.text = formatSecondsToHHMMSS(jump.totalFreefall!,);
+      _jumpTypeNotifier.value = jump.jumpType;
+      _weightController.text = jump.weight?.toString() ?? '';
+      _ageController.text = jump.age?.toString() ?? '';
+      _descriptionController.text = jump.description;
+      _signatureController.text = jump.signature;
+
+      // Guardamos el listener como una referencia
+      _freefallDelayListener1 = () {
+        if (_inicializando) return;
+        _actualizarTotalFreefall(
+          baseHistorica: jump.totalFreefall! - jump.freefallDelay,
+          delay: int.tryParse(_freefallDelayController.text) ?? 0,
+        );
+      };
+      //Llamamos el listener
+      _freefallDelayController.addListener(_freefallDelayListener1);
+
+    }
+    
+    //. Valores por defecto en BaseJump
+    else if(widget.index == 1 && widget.existingJump == null){
+      _dateController.text = _dateFormat.format(_selectedDate);
+      _locationController.text = "Linea";
+      _aircraftController.text = "B.A.S.E";
+      _equipmentController.text = "";
+      _altitudeController.text = "";
+      _freefallDelayController.text = "";
+      _weightController.text = "80";
+      _descriptionController.text = "";
+      _jumpTypeNotifier.value = 'belly';
+      
+      
+      _calcularTotalFreefall(); //esta funcion evalua el totalfreefall y lo asigna a su respectivo controller teniendo en cuenta el notifier de totalfreefall
+
+      //Asignamos el callback
+      _freefallDelayListener2 = () {
+      _calcularTotalFreefall();
+      };
+      //llamamos al callback del listener
+      _freefallDelayController.addListener(_freefallDelayListener2);
+    } 
 
      
   _inicializando = false; // ✅ Terminó de inicializar: ahora sí permite recalcular si hay cambios
@@ -107,14 +176,23 @@ class _AddJumpFormState extends State<AddJumpForm> {
 
   //. Funcion para calcular totalfreefall en registro nuevo
   void _calcularTotalFreefall() {
-    final delay = int.tryParse(_freefallDelayController.text) ?? 0;
+    if (widget.index == 0 ){final delay = int.tryParse(_freefallDelayController.text) ?? 0;
     final totalSegundos = lastTotalFreefallNotifier.value + delay;
 
     // Guardar segundos puros (para DB)
     _totalFreefallController.text = totalSegundos.toString();
 
     // Mostrar tiempo formateado
-    _totalFreefallControllerEdited.text = formatSecondsToHHMMSS(totalSegundos);
+    _totalFreefallControllerEdited.text = formatSecondsToHHMMSS(totalSegundos);}
+    else{
+      final delay = int.tryParse(_freefallDelayController.text) ?? 0;
+      final totalSegundos = lastTotalFreefallBaseNotifier.value + delay;
+
+      // Guardar segundos puros (para DB)
+    _totalFreefallController.text = totalSegundos.toString();
+    // Mostrar tiempo formateado
+    _totalFreefallControllerEdited.text = formatSecondsToHHMMSS(totalSegundos);}
+    
   }
 
   
@@ -145,6 +223,10 @@ class _AddJumpFormState extends State<AddJumpForm> {
     _jumpTypeNotifier.dispose();
     _weightController.dispose();
     _ageController.dispose();
+
+    _freefallDelayController.removeListener(_freefallDelayListener1);
+    _freefallDelayController.removeListener(_freefallDelayListener2);
+
     super.dispose();
   }
 
@@ -214,14 +296,7 @@ class _AddJumpFormState extends State<AddJumpForm> {
           child: ListView(
             children: [
 //. Tipo de deporte.                            
-              ValueListenableBuilder(
-                valueListenable: _deporteNotifier,  
-                builder: (BuildContext context, String dep, Widget? child) {
-                  return  DropdownButtonFormField(value: dep ,items: deporte.map((e) {
-                    return DropdownMenuItem(value:e, child: Text(e));
-                  },).toList(), onChanged: (value) => _deporteNotifier.value = value!,);
-                },
-              ),
+              Text(widget.index ==0?'SKYDIVING':'BASEJUMP',style: subtitulo,textAlign: TextAlign.center,),
 //. Numero de salto.              
               ValueListenableBuilder<int>(
                 valueListenable: lastJumpNumberNotifier,
@@ -302,9 +377,11 @@ class _AddJumpFormState extends State<AddJumpForm> {
                     onChanged: (newValue) {
                       _jumpTypeNotifier.value = newValue!;
                     },
-                    items: jumpTypeList.map((String item) {
-                      return DropdownMenuItem(value: item, child: Text(item));
-                    }).toList(),
+                    items: widget.index == 0 
+                      ? jumpTypeList.map((String item) {
+                        return DropdownMenuItem(value: item, child: Text(item));}).toList()
+                      : jumpTypeListInBase.map((String item) {
+                        return DropdownMenuItem(value: item, child: Text(item));}).toList(),
                     decoration: InputDecoration(labelText: 'Jump Type'),
                   );
                 },

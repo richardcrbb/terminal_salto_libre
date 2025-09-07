@@ -30,6 +30,7 @@ final TextEditingController _landingAltitudeController = TextEditingController()
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(length: 2, child: Scaffold(
+      appBar: AppBar(centerTitle: true, title: Text("SETTINGS")),
       body: Column(children: [
         TabBar(tabs: [Tab(text: "Skydiving",),Tab(text: "Basejump",)]),
         Expanded(

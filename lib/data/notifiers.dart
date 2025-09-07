@@ -4,6 +4,10 @@ import 'package:flutter/material.dart';
 ValueNotifier<int> indexSelected = ValueNotifier(0);
 ValueNotifier<bool> darkMode = ValueNotifier(true);
 
+//Notifiers de paginacion ruta logbook
+ValueNotifier<int> currentPageNotifier = ValueNotifier(0);
+ValueNotifier<int> totalPagesNotifier = ValueNotifier(0);
+
 //Info del ultimo salto en skydiving
 ValueNotifier<int> lastJumpNumberNotifier = ValueNotifier(0);
 ValueNotifier<int> lastTotalFreefallNotifier = ValueNotifier(0);

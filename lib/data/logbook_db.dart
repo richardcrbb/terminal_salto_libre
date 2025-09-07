@@ -6,13 +6,16 @@ import 'package:sqflite/sqflite.dart';
 import 'package:terminal_salto_libre/data/models.dart';
 
 class JumpLogDatabase {
+  //.Singleton
   static Database? _database;
 
+  //!Getter
   static Future<Database> get database async {
     if (_database != null) return _database!;
     return await _initDB();
   }
 
+  //.Inicia conexion con db
   static Future<Database> _initDB() async {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, 'jump_logs.db');
@@ -25,6 +28,7 @@ class JumpLogDatabase {
         await db.execute('PRAGMA foreign_keys = ON');
       },
       onCreate: (db, version) async {
+        //. Crea Tabla de Skydiving
         await db.execute('''
             CREATE TABLE jumps (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -44,6 +48,7 @@ class JumpLogDatabase {
               favorites INTEGER DEFAULT 0
             )
           ''');
+        //. Crea Tabla 'settings' de skydiving
         await db.execute('''
             CREATE TABLE settings (
               key TEXT PRIMARY KEY,
@@ -56,7 +61,7 @@ class JumpLogDatabase {
               previousFunJumps INTEGER
             )
           ''');
-
+        //. Inicializa valores de tabla 'settings' skydiving
         await db.insert('settings', {
           'key': 'previousInfo',
           'previousJumps': 0,
@@ -67,32 +72,32 @@ class JumpLogDatabase {
           'previousCoaches':0,
           'previousFunJumps':0,
         });
-
+        //. Crea tabla sistema de unidades.
         await db.execute('''
             CREATE TABLE unitsystem (
               key TEXT PRIMARY KEY,
               boolValue INTEGER
             )
           ''');
-        
+         //. Inicializa valores de tabla 's. valores' 
         await db.insert('unitsystem', {
           'key': 'imperialSystem',
           'boolValue': 1,
         });
-
+        //. Crea tabla 'landingaltitude'
         await db.execute('''
             CREATE TABLE landingaltitude(
               key TEXT PRIMARY KEY,
               altitude INTEGER
             )''');
-        
+        //. Inicializa valores de tabla 'landingaltitude'
         await db.insert('landingaltitude',{
           'key': 'landing',
           'altitude': 0,
           },
           conflictAlgorithm: ConflictAlgorithm.replace
         );
-
+        //. Crea tabla 'posalti'
         await db.execute('''
             CREATE TABLE IF NOT EXISTS posalti (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -104,12 +109,12 @@ class JumpLogDatabase {
               FOREIGN KEY (jump_id) REFERENCES jumps (id) ON DELETE CASCADE
             );
           ''');
-
+        //. Crea indice 'posalti'
         await db.execute('''
             CREATE INDEX IF NOT EXISTS idx_posalti_jump_id 
             ON posalti (jump_id);
           ''');
-        
+        //@ Crea tabla 'basejumptable'
         await db.execute('''
             CREATE TABLE IF NOT EXISTS basejumptable (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -129,7 +134,7 @@ class JumpLogDatabase {
               favorites INTEGER DEFAULT 0
             )
           ''');
-
+        //@ Crea tabla 'settingsBase'
         await db.execute('''
             CREATE TABLE settingsBase (
               key TEXT PRIMARY KEY,
@@ -143,7 +148,7 @@ class JumpLogDatabase {
               previousWingsuit INTEGER
             )
           ''');
-
+        //@ Inicializa valores de tabla 'settingsBase'
         await db.insert('settingsBase', {
           'key': 'previousInfo',
           'previousJumps': 0,
@@ -164,7 +169,7 @@ class JumpLogDatabase {
                                                       //!CRUD -> CUDR
 
   //. INSERTAR en jumps
-  //  Funcion para insertar un salto
+  //  Funcion para insertar un salto de skydiving
   static Future<int> insertJump(JumpLog log) async {
     final db = await database;
     return await db.insert(
@@ -196,8 +201,8 @@ class JumpLogDatabase {
     );
   }
 
-  //. INSERTAR en basejumptable
-  //  Funcion para insertar un salto
+  //@ INSERTAR en basejumptable
+  //  Funcion para insertar un salto de base
   static Future<int> insertBaseJump(JumpLog log) async {
     final db = await database;
     return await db.insert(
@@ -209,7 +214,7 @@ class JumpLogDatabase {
 
 
   //. ACTUALIZAR en jumps
-  // Funcion para actualizar un salto y recalcular datos de freefall posteriores
+  // Funcion para actualizar un salto y recalcular datos de freefall posteriores en skydiving
   static Future<void> updateJumpAndRecalculate(JumpLog updatedJump) async {
   final db = await database;
 
@@ -245,9 +250,9 @@ class JumpLogDatabase {
   }
   }
 
-  //. ACTUALIZAR en settings
+  //. ACTUALIZAR en 'settings' de skydiving
   // Funcion que actualiza saltos previos y caida libre previa en la tabla settigns que por defecto esta en 0
-  // tambien puede actualizar los datos que se le ingresan a settings, eso si antes de insertar un nuevo salto en jumps.
+  // tambien puede actualizar los datos que se le ingresan a settings, eso si, antes de insertar un nuevo salto en 'jumps'.
 
   static Future<void> savePreviousSettings(SettingsSkydivingLog settingsLog )async {
   
@@ -271,8 +276,8 @@ class JumpLogDatabase {
   );
   }
 
-  //. ACTUALIZAR en basejumptable
-  // Funcion para actualizar un salto y recalcular datos de freefall posteriores
+  //@ ACTUALIZAR en basejumptable
+  // Funcion para actualizar un salto y recalcular datos de freefall posteriores en base
   static Future<void> updateJumpAndRecalculateBaseJump(JumpLog updatedJump) async {
   final db = await database;
 
@@ -308,9 +313,9 @@ class JumpLogDatabase {
   }
   }
 
-  //. ACTUALIZAR en settingsbase
-  // Funcion que actualiza saltos previos y caida libre previa en la tabla settigns que por defecto esta en 0
-  // tambien puede actualizar los datos que se le ingresan a settings, eso si antes de insertar un nuevo salto en jumps.
+  //@ ACTUALIZAR en 'settingsBase'
+  // Funcion que actualiza saltos previos y caida libre previa en la tabla settignsBase que por defecto esta en 0
+  // tambien puede actualizar los datos que se le ingresan a settingsBase, eso si, antes de insertar un nuevo salto en basejumptable.
 
   static Future<void> savePreviousSettingsBase(SettingsBasejumpLog settingsLog )async {
   
@@ -395,8 +400,8 @@ static Future<void> deleteJumpByNumber(int jumpNumber) async {
   }
   }
 
-  //. ELIMINAR en basejumptable
-  //Funcion para eliminar un registro y actualizar el jumpNumber
+  //@ ELIMINAR en basejumptable
+  //Funcion para eliminar un registro y actualizar el jumpNumber en basejumptable
   // ✅ Elimina un salto y recalcula jumpNumber y totalFreefall de los posteriores
 static Future<void> deleteJumpByNumberInBasejumptable(int jumpNumber) async {
   final db = await database;
@@ -464,7 +469,7 @@ static Future<void> deleteJumpByNumberInBasejumptable(int jumpNumber) async {
     return result.map((map) => JumpLog.fromMap(map)).toList();
   }
 
-   //. TODOS LOS SALTOS de Base
+   //@ TODOS LOS SALTOS de Base
   //  Funcion para obtener una lista de todos los saltos base
   static Future<List<JumpLog>> getJumpsBase() async {
     final db = await database;
@@ -504,7 +509,7 @@ static Future<void> deleteJumpByNumberInBasejumptable(int jumpNumber) async {
     return result.first['maxJump'] as int;
   }
 
-  //. NUMERO DEL ULTIMO salto en base
+  //@ NUMERO DEL ULTIMO salto en base
   // Funcion que optiene de 'basejumptable' el NUMERO DEL ULTIMO salto (o busca en la tabla 'settingsBase')
   static Future<int> getLastJumpNumberBase() async {
     final db = await database;
@@ -525,7 +530,7 @@ static Future<void> deleteJumpByNumberInBasejumptable(int jumpNumber) async {
       if (settingsResult.isNotEmpty) {
         return settingsResult.first['previousJumps'] as int; 
       }
-      return 0; // Si no existe en 'settings', devolver 0 por defecto
+      return 0; // Si no existe en 'settingsBase', devolver 0 por defecto
     }
 
     //si 'basejumptable' no esta vacia:
@@ -572,8 +577,8 @@ static Future<void> deleteJumpByNumberInBasejumptable(int jumpNumber) async {
     return (result.first['totalFreefall'] as int?) ?? 0;
   }
 
-  //. TOTALFREEFALL de base
-  // Funcion que obtiene el TOTALFREEFALL del último salto (o de la tabla 'settings')
+  //@ TOTALFREEFALL de base
+  // Funcion que obtiene el TOTALFREEFALL del último salto (o de la tabla 'settingsBase')
   static Future<int> getLastTotalFreefallBase() async {
     final db = await database;
 
@@ -594,7 +599,7 @@ static Future<void> deleteJumpByNumberInBasejumptable(int jumpNumber) async {
       if (settingsResult.isNotEmpty) {
         return settingsResult.first['previousFreefall'] as int;
       }
-      return 0; // Si no existe en 'settings', devolver 0 por defecto
+      return 0; // Si no existe en 'settingsBase', devolver 0 por defecto
     }
 
     //si 'basejumptable' no esta vacia:
@@ -607,6 +612,7 @@ static Future<void> deleteJumpByNumberInBasejumptable(int jumpNumber) async {
     );
     return (result.first['totalFreefall'] as int?) ?? 0;
   }
+
   //. Lista de saltos del ultimo dia. Skydiving
   // Funcion que busca los saltos del ultimo dia que salte....
   // Busca todos los saltos del último día (ignorando la hora)
@@ -624,6 +630,31 @@ static Future<List<JumpLog>> getJumpsWithLastDate() async {
   // Luego obtenemos todos los registros de ese día (ignorando la hora)
   final result = await db.query(
     'jumps',
+    where: "substr(date, 1, 10) = ?",
+    whereArgs: [lastDate],
+    orderBy: 'id DESC',
+  );
+
+  return result.map((map) => JumpLog.fromMap(map)).toList();
+  }
+
+  //@ Lista de saltos del ultimo dia. Skydiving
+  // Funcion que busca los saltos del ultimo dia que salte....
+  // Busca todos los saltos del último día (ignorando la hora)
+static Future<List<JumpLog>> getJumpsWithLastDateBase() async {
+  final db = await database;
+
+  // Primero obtenemos solo la parte de la fecha (YYYY-MM-DD) de la última fecha registrada
+  final lastDateResult = await db.rawQuery(
+    "SELECT substr(MAX(date), 1, 10) as lastDate FROM basejumptable",
+  );
+
+  final lastDate = lastDateResult.first['lastDate'] as String?;
+  if (lastDate == null) return [];
+
+  // Luego obtenemos todos los registros de ese día (ignorando la hora)
+  final result = await db.query(
+    'basejumptable',
     where: "substr(date, 1, 10) = ?",
     whereArgs: [lastDate],
     orderBy: 'id DESC',
@@ -675,7 +706,7 @@ static Future<List<JumpLog>> getJumpsWithLastDate() async {
     return counts;
   }
 
-  //. Lista resumen por categoria en BASEJUMP.
+  //@ Lista resumen por categoria en BASEJUMP.
   // Funcion que busca cuantos saltos tengo de cada tipo de salto base....
   static Future<Map<String, int>> getJumpTypeCountsBase() async {
     final db = await database;
@@ -702,7 +733,7 @@ static Future<List<JumpLog>> getJumpsWithLastDate() async {
     return counts;
   }
 
-  //.Objeto SettingsLog
+  //. Objeto SettingsLog de skydiving
 
   static Future<SettingsSkydivingLog> getSettingsLog ()async{
     final Database db = await database;
@@ -716,7 +747,7 @@ static Future<List<JumpLog>> getJumpsWithLastDate() async {
 
   }
 
-  //.Objeto SettingsBasejumpLog
+  //@ Objeto SettingsBasejumpLog de Base
 
   static Future<SettingsBasejumpLog> getSettingsLogBase () async {
     final Database db = await database;
@@ -731,7 +762,7 @@ static Future<List<JumpLog>> getJumpsWithLastDate() async {
   }
 
   //. set FAVORITO en skydive
-  // Funcion para marcar un salto como favorito
+  // Funcion para marcar un salto como favorito en skydiving
 
   static Future<void> favorite(int? id) async {
       final db = await database;
@@ -742,8 +773,8 @@ static Future<List<JumpLog>> getJumpsWithLastDate() async {
       ''', [id]);
     }
   
-  //. set FAVORITO en Base
-  // Funcion para marcar un salto como favorito
+  //@ set FAVORITO en Base
+  // Funcion para marcar un salto como favorito en base
 
   static Future<void> favoriteBase(int? id) async {
       final db = await database;
@@ -762,8 +793,8 @@ static Future<List<JumpLog>> getJumpsWithLastDate() async {
       return result.map((map) => JumpLog.fromMap(map)).toList();
   }
 
-  //. LISTA de favoritos de base
-  // Funcion para extraer una lista de saltos favoritos de mi base de datos
+  //@ LISTA de favoritos de base
+  // Funcion para extraer una lista de saltos favoritos de mi base de datos de mi tabla 'basejumptable'
   static Future<List<JumpLog>> favListBase()async{
     final db = await database;
     final result = await db.query('basejumptable', orderBy: 'id DESC', where: 'favorites = ?', whereArgs: [1]);
@@ -799,6 +830,17 @@ static Future<List<JumpLog>> getJumpsWithLastDate() async {
     conflictAlgorithm: ConflictAlgorithm.replace,);
   }
 
+  //. get landingaltitude
+
+  static Future<int> getLandingAltitude () async{
+    Database db = await database;
+    List<Map<String, dynamic>> result = await db.query('landingaltitude',where: 'key = ?',whereArgs: ['landing']);
+    if(result.isNotEmpty){
+      return result.first['altitude'] as int;
+    }
+    return 0;
+  }
+
   //. update landingaltitude
 
   static Future<int> setLandingAltitude (int altitude) async{
@@ -809,17 +851,6 @@ static Future<List<JumpLog>> getJumpsWithLastDate() async {
       whereArgs: ['landing'],
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
-  }
-
-  //. get landingaltitude
-
-  static Future<int> getLandingAltitude () async{
-    Database db = await database;
-    List<Map<String, dynamic>> result = await db.query('landingaltitude',where: 'key = ?',whereArgs: ['landing']);
-    if(result.isNotEmpty){
-      return result.first['altitude'] as int;
-    }
-    return 0;
   }
 
   //. obtener puntos de posalti

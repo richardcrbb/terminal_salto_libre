@@ -194,18 +194,15 @@ const List<String> jumpTypeList = [
 
 //!      Listado de tipo de salto en BASEJUMP.                                                                                                    
 const List<String> jumpTypeListInBase = [
-  'previousAsisted',
-  'previousBelly',
-  'previousTARD',
-  'previousFreefly',
-  'previousTracking',
-  'previousWingsuit',
+  'asisted',
+  'belly',
+  'TARD',
+  'freefly',
+  'tracking',
+  'wingsuit',
 ];
 
 
-//!      Listado de deporte                                                                                                             
-
-List<String> deporte =['skydiving','basejump'];
 
 //!      Formato de fecha                                                                                                            
 String formatearFecha(String fechaISO) {

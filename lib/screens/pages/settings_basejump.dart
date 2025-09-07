@@ -74,7 +74,6 @@ class _SettingsBasejumpState extends State<SettingsBasejump> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(centerTitle: true, title: Text("SETTINGS")),
       body: Padding(
         padding: EdgeInsets.all(10),
         child: Form(
