@@ -299,7 +299,7 @@ class _AddJumpFormState extends State<AddJumpForm> {
               Text(widget.index ==0?'SKYDIVING':'BASEJUMP',style: subtitulo,textAlign: TextAlign.center,),
 //. Numero de salto.              
               ValueListenableBuilder<int>(
-                valueListenable: lastJumpNumberNotifier,
+                valueListenable: widget.index ==0 ? lastJumpNumberNotifier : lastJumpNumberBaseNotifier,
                 builder:
                     (BuildContext context, int ultimoSalto, Widget? child) {
                       if (widget.existingJump == null) {

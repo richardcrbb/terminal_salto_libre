@@ -34,10 +34,12 @@ class BasejumpLogbookState extends State<BasejumpLogbook> {
   Future<void> _loadJumps() async{_jumpsFuture = JumpLogDatabase.getJumpsBase();}
 
 //. Metodo para recargar datos y UI de esta ruta.
-  Future<void> _refreshJumps() async {
-    _loadJumps();
-    setState(() {});
+  Future<void> refreshJumps() async {
+    setState(() {
+      _loadJumps();
+    });
   }
+
 
 
   @override
@@ -121,12 +123,12 @@ class BasejumpLogbookState extends State<BasejumpLogbook> {
 //. En esta seccion se intenta ELIMINAR
                         if (action == 'Eliminar') {
                           try{
-                            await JumpLogDatabase.deleteJumpByNumber(jump.jumpNumber,);
+                            await JumpLogDatabase.deleteJumpByNumberInBasejumptable(jump.jumpNumber,);
                             // Actualizar el ValueNotifier con el último salto y el notifier de acomulado de caida libre
-                            lastJumpNumberNotifier.value = await JumpLogDatabase.getLastJumpNumber();
-                            lastTotalFreefallNotifier.value = await JumpLogDatabase.getLastTotalFreefall();
+                            lastJumpNumberBaseNotifier.value = await JumpLogDatabase.getLastJumpNumberBase();
+                            lastTotalFreefallBaseNotifier.value = await JumpLogDatabase.getLastTotalFreefallBase();
                             // Señala que esta ruta logbook debe reconstruirse con los datos actuales de la db.
-                            await _refreshJumps();
+                            await refreshJumps();
                             messenger.showSnackBar(const SnackBar(content: Text('✅ Salto eliminado')),);
                             } catch(error){
                               if (!mounted) return;
@@ -143,12 +145,12 @@ class BasejumpLogbookState extends State<BasejumpLogbook> {
                                 //aqui se envia el objeto JumpLog y un callback de edicion. [push data]
                                 existingJump: jump,
                                 onSave: (updatedJump) async {
-                                  await JumpLogDatabase.updateJumpAndRecalculate(updatedJump,);
+                                  await JumpLogDatabase.updateJumpAndRecalculateBaseJump(updatedJump,);
                                   // Actualizar el ValueNotifier con el último salto y el notifier de acomulado de caida libre
-                                  lastJumpNumberNotifier.value = await JumpLogDatabase.getLastJumpNumber();
-                                  lastTotalFreefallNotifier.value = await JumpLogDatabase.getLastTotalFreefall();
+                                  lastJumpNumberBaseNotifier.value = await JumpLogDatabase.getLastJumpNumberBase();
+                                  lastTotalFreefallBaseNotifier.value = await JumpLogDatabase.getLastTotalFreefallBase();
                                   // Señala que esta ruta logbook debe reconstruirse con los datos actuales de la db.
-                                  await _refreshJumps();
+                                  await refreshJumps();
                                   messenger.showSnackBar(const SnackBar(content: Text('✅ Salto editado')),);
                                 },
                               ),
@@ -159,9 +161,9 @@ class BasejumpLogbookState extends State<BasejumpLogbook> {
                         } 
 //. En esta seccion se intenta marcar como Favorito
                         else if (action == 'Favoritos'){
-                          try{await JumpLogDatabase.favorite(jump.id);
+                          try{await JumpLogDatabase.favoriteBase(jump.id);
                               messenger.showSnackBar(const SnackBar(content: Text('✅ Salto Favorito')),);
-                              await _refreshJumps();
+                              await refreshJumps();
                               }catch(error){messenger.showSnackBar(SnackBar(content: Text('❌ No se puedo marcar como favorito el salto: $error')),);}
                         }
 //. En esta seccion se empieza a guardar el registro de posicion altitud y tiempo del salto.

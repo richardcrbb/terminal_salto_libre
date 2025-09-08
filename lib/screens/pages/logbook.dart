@@ -111,14 +111,21 @@ class _LogbookPageState extends State<LogbookPage>with SingleTickerProviderState
                     index: _tabController.animation!.value.round(),
                     onSave: (jump) async {
                       try {
-                        await JumpLogDatabase.insertJump(jump);
-                        // Actualizar el ValueNotifier con el último salto y el notifier de acomulado de caida libre
-                        lastJumpNumberNotifier.value =
-                            await JumpLogDatabase.getLastJumpNumber();
-                        lastTotalFreefallNotifier.value =
-                            await JumpLogDatabase.getLastTotalFreefall();
-                        // Señala que esta ruta logbook debe reconstruirse con los datos actuales de la db.
-                        await _skydivingKey.currentState?.refreshJumps();
+                        if(_tabController.animation!.value.round() == 0){
+                            await JumpLogDatabase.insertJump(jump);
+                          // Actualizar el ValueNotifier con el último salto y el notifier de acomulado de caida libre
+                          lastJumpNumberNotifier.value = await JumpLogDatabase.getLastJumpNumber();
+                          lastTotalFreefallNotifier.value = await JumpLogDatabase.getLastTotalFreefall();
+                          // Señala que esta ruta logbook debe reconstruirse con los datos actuales de la db.
+                          await _skydivingKey.currentState?.refreshJumps();
+                          }else{
+                            await JumpLogDatabase.insertBaseJump(jump);
+                          // Actualizar el ValueNotifier con el último salto y el notifier de acomulado de caida libre
+                          lastJumpNumberBaseNotifier.value = await JumpLogDatabase.getLastJumpNumberBase();
+                          lastTotalFreefallBaseNotifier.value = await JumpLogDatabase.getLastTotalFreefallBase();
+                          // Señala que esta ruta logbook debe reconstruirse con los datos actuales de la db.
+                          await _basejumpKey.currentState?.refreshJumps();
+                          }
                       } catch (error) {
                         if (!mounted) return;
                         messenger.showSnackBar(

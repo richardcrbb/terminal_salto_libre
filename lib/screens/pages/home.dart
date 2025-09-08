@@ -28,7 +28,7 @@ class _HomePageState extends State<HomePage> {
     lastTotalFreefallBaseNotifier.value = await JumpLogDatabase.getLastTotalFreefallBase();
     
     //Necesito cargar este notifier para mostrar las unidades correctas.
-    isImperialSystemNotifier.value = await JumpLogDatabase.isImperialSystem() == 1; // con solo comprar[==] el resultado devuelve automaticamente true o false, no se necestia evaluar el restulado con un operador ternario [?]
+    isImperialSystemNotifier.value =  await JumpLogDatabase.isImperialSystem() == 1; // con solo comprar[==] el resultado devuelve automaticamente true o false, no se necestia evaluar el restulado con un operador ternario [?]
 
     final jumps = await JumpLogDatabase.getJumpsWithLastDate();
     final counts = await JumpLogDatabase.getJumpTypeCounts();

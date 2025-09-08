@@ -33,7 +33,9 @@ class SkydivingLogbookState extends State<SkydivingLogbook> {
 
   //. Metodo para recargar datos y UI de esta ruta.
   Future<void> refreshJumps() async {
-    setState(() {});
+    setState(() {
+      _loadJumps();
+    });
   }
 
   @override
