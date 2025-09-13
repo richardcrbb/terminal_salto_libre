@@ -1,5 +1,6 @@
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
+import 'package:terminal_salto_libre/data/shared_functions.dart';
 
 //!  Clase JumpLog                                                                                                         
 
@@ -128,7 +129,7 @@ class SettingsSkydivingLog{
   
 }
 
-//!   Clase SettingsBasejumpLog                                                                                                        
+//#   Clase SettingsBasejumpLog                                                                                                        
 
  class SettingsBasejumpLog {
   int previousJumps;
@@ -178,9 +179,75 @@ class SettingsSkydivingLog{
   }
  }
 
-//!      Estilo de Texo 'titulo'                                                                                                     
+//$       ListTile de ruta Logbook                                                                                                                    
 
-const TextStyle titulo = TextStyle(fontWeight: FontWeight.bold, fontSize: 30.0);
+class ListTileOfLogbook{
+  JumpLog jump;
+  
+  ListTileOfLogbook(this.jump);
+
+  CircleAvatar leading () {return CircleAvatar(child: Text('${jump.jumpNumber}'));}
+  
+  Text title () {return Text(
+    '${jump.jumpType} en ${jump.location} el ${formatearFecha(jump.date)}',
+    );}
+
+  Text subtitle () { return Text(
+    '${jump.aircraft}, ${jump.altitude} FT, ${jump.freefallDelay}\'s Delay, ${formatSecondsToHHMMSS(jump.totalFreefall!)}, ${jump.signature}',);
+    }
+  Icon trailing (){return jump.favorites == 0 ? Icon(Icons.star_outline_sharp): Icon(Icons.stars_rounded);}
+
+  Future onTap(BuildContext context)async{
+    double spacer = 110;
+    Padding jumpDetails = Padding(
+      padding: const EdgeInsets.all(20),
+        child: SingleChildScrollView(
+          child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: [SizedBox(width: spacer, child: Text('Jump Number:')),SizedBox(child: Text('${jump.jumpNumber}'),),],),
+            SizedBox(height: 10,),
+            Row(children: [SizedBox(width: spacer, child: Text('Date:')),SizedBox(child: Text(formatearFecha(jump.date)),),],),
+            SizedBox(height: 10,),
+            Row(children: [SizedBox(width: spacer, child: Text('Location:')),SizedBox(child: Text(jump.location),),],),
+            SizedBox(height: 10,),
+            Row(children: [SizedBox(width: spacer, child: Text('Aircraft:')),SizedBox(child: Text(jump.aircraft),),],),
+            SizedBox(height: 10,),
+            Row(children: [SizedBox(width: spacer, child: Text('Equipment:')),SizedBox(child: Text(jump.equipment),),],),
+            SizedBox(height: 10,),
+            Row(children: [SizedBox(width: spacer, child: Text('Altitude:')),SizedBox(child: Text('${jump.altitude}'),),],),
+            SizedBox(height: 10,),
+            Row(children: [SizedBox(width: spacer, child: Text('Freefall Delay:')),SizedBox(child: Text('${jump.freefallDelay}'),),],),
+            SizedBox(height: 10,),
+            Row(children: [SizedBox(width: spacer, child: Text('Total Freefall:')),SizedBox(child: Text('${jump.totalFreefall}'),),],),
+            SizedBox(height: 10,),
+            Row(children: [SizedBox(width: spacer, child: Text('Jump Type:')),SizedBox(child: Text(jump.jumpType),),],),
+            SizedBox(height: 10,),
+            Row(children: [SizedBox(width: spacer, child: Text('Weight:')),SizedBox(child: Text('${jump.weight}'),),],),
+            SizedBox(height: 10,),
+            Row(children: [SizedBox(width: spacer, child: Text('Age:')),SizedBox(child: Text('${jump.age}'),),],),
+            SizedBox(height: 10,),
+            Row(children: [SizedBox(width: spacer, child: Text('Description:')),Expanded(child: Text(jump.description),),],),
+            SizedBox(height: 10,),
+            Row(children: [SizedBox(width: spacer, child: Text('Signature:')),SizedBox(child: Text(jump.signature),),],),
+            SizedBox(height: 10,),
+            Row(children: [SizedBox(width: spacer, child: Text('Favorites:')),SizedBox(child: trailing()),],),
+            ],
+          ),
+        ),
+    );
+    return showDialog(context: context, builder: (_) {
+      return Dialog(child: jumpDetails,);
+    },);
+  }
+}
+
+//$       Tipo de deporte                                                                                                                                     
+enum Deporte {
+  skydiving,
+  basejump,
+  }
 
 
 //!      Listado de tipo de salto.                                                                                                    
@@ -192,14 +259,14 @@ const List<String> jumpTypeList = [
   'Fun Jump',
 ];
 
-//!      Listado de tipo de salto en BASEJUMP.                                                                                                    
+//#      Listado de tipo de salto en BASEJUMP.                                                                                                    
 const List<String> jumpTypeListInBase = [
-  'asisted',
-  'belly',
+  'Asisted',
+  'Belly',
   'TARD',
-  'freefly',
-  'tracking',
-  'wingsuit',
+  'Freefly',
+  'Tracking',
+  'Wingsuit',
 ];
 
 
@@ -211,6 +278,9 @@ String formatearFecha(String fechaISO) {
   return DateFormat('dd/MMM/yyyy').format(dateTime);
   }
 
+//!      Estilo de Texo 'titulo'                                                                                                     
+
+const TextStyle titulo = TextStyle(fontWeight: FontWeight.bold, fontSize: 30.0);
 
 //!      Estilo de Texo 'subtitulo' de altimetro                                                                                        
 

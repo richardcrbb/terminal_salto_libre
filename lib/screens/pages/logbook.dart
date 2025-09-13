@@ -52,6 +52,7 @@ class _LogbookPageState extends State<LogbookPage>with SingleTickerProviderState
       appBar: AppBar(title: const Text("Logbook"), centerTitle: true),
       body: Column(
         children: [
+//. Pestañas de encabezado.          
           TabBar(
             tabs: [
               Tab(text: 'Skydiving'),
@@ -59,6 +60,7 @@ class _LogbookPageState extends State<LogbookPage>with SingleTickerProviderState
             ],
             controller: _tabController,
           ),
+//. Pestañas de skydiving o basejump.          
           Expanded(
             child: TabBarView(
               controller: _tabController,
@@ -68,6 +70,7 @@ class _LogbookPageState extends State<LogbookPage>with SingleTickerProviderState
               ],
             ),
           ),
+//. Botones de paginacion.          
           ValueListenableBuilder(
             valueListenable: totalPagesNotifier,
             builder: (context, value, child) {
@@ -96,8 +99,7 @@ class _LogbookPageState extends State<LogbookPage>with SingleTickerProviderState
           ),
         ],
       ),
-
-      //. Este boton presenta el formato para agregar un salto nuevo y lo guarda, actualiza los notifiers .
+//. Este boton presenta el formato para agregar un salto nuevo y lo guarda, actualiza los notifiers .
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 35.0),
         child: FloatingActionButton(

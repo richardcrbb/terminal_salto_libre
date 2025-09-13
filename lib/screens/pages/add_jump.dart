@@ -156,7 +156,7 @@ class _AddJumpFormState extends State<AddJumpForm> {
       _freefallDelayController.text = "";
       _weightController.text = "80";
       _descriptionController.text = "";
-      _jumpTypeNotifier.value = 'belly';
+      _jumpTypeNotifier.value = 'Belly';
       
       
       _calcularTotalFreefall(); //esta funcion evalua el totalfreefall y lo asigna a su respectivo controller teniendo en cuenta el notifier de totalfreefall
@@ -320,8 +320,8 @@ class _AddJumpFormState extends State<AddJumpForm> {
 //. Fecha.
               TextFormField(
                 controller: _dateController,
-                decoration: const InputDecoration(
-                  labelText: 'Fecha',
+                decoration: InputDecoration(
+                  labelText: _dateController.text == _dateFormat.format(DateTime.now()) ? 'Hoy' : 'Fecha',
                   suffixIcon: Icon(Icons.calendar_today_outlined),
                 ),
                 readOnly: true,
@@ -338,17 +338,20 @@ class _AddJumpFormState extends State<AddJumpForm> {
               TextFormField(
                 controller: _aircraftController,
                 decoration: const InputDecoration(labelText: 'Aeronave'),
+                validator: (value) => value!.isEmpty ? 'Requerido' : null,
               ),
 //. Equipo.              
               TextFormField(
                 controller: _equipmentController,
                 decoration: const InputDecoration(labelText: 'Equipo'),
+                validator: (value) => value!.isEmpty ? 'Requerido' : null,
               ),
 //. Altitud.              
               TextFormField(
                 controller: _altitudeController,
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(labelText: 'Altitud (pies)'),
+                validator: (value) => value!.isEmpty ? 'Requerido' : null,
               ),
 //. Delay.              
               TextFormField(
@@ -357,6 +360,7 @@ class _AddJumpFormState extends State<AddJumpForm> {
                 decoration: const InputDecoration(
                   labelText: 'Retardo (segundos)',
                 ),
+                validator: (value) => value!.isEmpty ? 'Requerido' : null,
               ),
 //. TotalFreefall.              
               TextFormField(
@@ -403,11 +407,13 @@ class _AddJumpFormState extends State<AddJumpForm> {
                 controller: _descriptionController,
                 decoration: const InputDecoration(labelText: 'Descripción'),
                 maxLines: 3,
+                validator: (value) => value!.isEmpty ? 'Requerido' : null,
               ),
 //. Signature.              
               TextFormField(
                 controller: _signatureController,
                 decoration: const InputDecoration(labelText: 'Firma'),
+                validator: (value) => value!.isEmpty ? 'Requerido' : null,
               ),
               const SizedBox(height: 20),
 //. Boton de guardado.              
