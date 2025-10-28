@@ -703,6 +703,19 @@ static Future<List<JumpLog>> getJumpsWithLastDateBase() async {
       counts[type] = count;
     }
 
+    // Consulta los valores previos desde settings (solo una fila esperada)
+    final settingsResult = await db.rawQuery('SELECT * FROM settings LIMIT 1');
+    if (settingsResult.isNotEmpty) {
+    final settings = settingsResult.first;
+
+    // Suma los valores previos al conteo actual
+    counts['Tandem'] = (counts['Tandem'] ?? 0) + (settings['previousTandems'] as int? ?? 0);
+    counts['AFF'] = (counts['AFF'] ?? 0) + (settings['previousAffs'] as int? ?? 0);
+    counts['Camera'] = (counts['Camera'] ?? 0) + (settings['previousCameras'] as int? ?? 0);
+    counts['Coach'] = (counts['Coach'] ?? 0) + (settings['previousCoaches'] as int? ?? 0);
+    counts['Fun Jump'] = (counts['Fun Jump'] ?? 0) + (settings['previousFunJumps'] as int? ?? 0);
+    }
+
     return counts;
   }
 
