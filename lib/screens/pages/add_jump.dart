@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:terminal_salto_libre/data/models.dart';
 import 'package:intl/intl.dart';
 import 'package:terminal_salto_libre/data/notifiers.dart';
@@ -90,11 +91,11 @@ class _AddJumpFormState extends State<AddJumpForm> {
     //. Valores por defecto skydiving
     else if(widget.index == 0 && widget.existingJump == null){
       _dateController.text = _dateFormat.format(_selectedDate);
-      _locationController.text = "Cali";
-      _aircraftController.text = "PA-32";
+      _locationController.text = "SD Toronto";
+      _aircraftController.text = "Caravan";
       _equipmentController.text = "Sigma-340";
-      _altitudeController.text = "8500";
-      _freefallDelayController.text = "25";
+      _altitudeController.text = "12000";
+      _freefallDelayController.text = "45";
       _weightController.text = "80";
       _descriptionController.text = "Tandem con ";
       _jumpTypeNotifier.value = 'Tandem';
@@ -377,7 +378,7 @@ class _AddJumpFormState extends State<AddJumpForm> {
                 valueListenable: _jumpTypeNotifier,
                 builder: (BuildContext context, String jumpT, Widget? child) {
                   return DropdownButtonFormField(
-                    value: jumpT,
+                    initialValue: jumpT,
                     onChanged: (newValue) {
                       _jumpTypeNotifier.value = newValue!;
                     },
@@ -391,11 +392,22 @@ class _AddJumpFormState extends State<AddJumpForm> {
                 },
               ),
 //. Peso.              
-              TextFormField(
-                controller: _weightController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Peso'),
-              ),
+              Row(children: [
+                Expanded(
+                  child: TextFormField(
+                    controller: _weightController,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    decoration: const InputDecoration(labelText: 'Peso en kg'),
+                  ),
+                ),
+                TextButton(onPressed: () {
+                  _weightController.text = ((int.tryParse(_weightController.text) ?? 0)/2.2).round().toString();
+                  },
+                  style: TextButton.styleFrom(side: BorderSide(width: 5),shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                  child: Text('↑↓ Convert Lbs to Kg'),
+                ),
+              ],),
 //. Edad.              
               TextFormField(
                 controller: _ageController,
