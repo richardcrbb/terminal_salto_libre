@@ -35,9 +35,12 @@ class SkydivingLogbookState extends State<SkydivingLogbook> {
         builder: (context, snapshot) {
           
           //Funcion para obtener errores de la obtencion de datos.
-          final Center? snapshotState = snapshotStateFunction(snapshot);
-          if (snapshotState != null){return snapshotState;}
+          if (snapshot.hasError) {
+            return Center(child: Text('Error getting the DB data: ${snapshot.error.toString()}'),);
+          }
+          if (!snapshot.hasData) {return const Center(child: CircularProgressIndicator(),);}
           
+
           // En esta seccion se recibe los datos de la db y se asignan a variables de la ruta, tambien se definen variables para paginacion de la ruta.
           final jumps = snapshot.data!;
           final startIndex = currentPageNotifier.value * itemsPerPage;

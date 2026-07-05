@@ -8,7 +8,9 @@ class HomeSkydiving extends StatefulWidget {
   final List<JumpLog> favList;
   final Map<String,int> counts;
   final List<JumpLog> sobrecuposDelDia;
-  const HomeSkydiving({super.key, required this.jumps,required this.favList, required this.counts,required this.sobrecuposDelDia,});
+  final List<JumpLog> handycams;
+  final List<JumpLog> moonJumps;
+  const HomeSkydiving({super.key, required this.jumps,required this.favList, required this.counts,required this.sobrecuposDelDia, required this.handycams, required this.moonJumps,});
 
   @override
   State<HomeSkydiving> createState() => _HomeSkydivingState();
@@ -30,28 +32,47 @@ class _HomeSkydivingState extends State<HomeSkydiving> {
               const SizedBox(height: 10),
               Text('Resumen del último día', style: titulo),
               const SizedBox(height: 10),
-//.Esta caja muestra total de saltos del ultimo dia
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    SizedBox(width: 100, child: Text('Saltos del día ')),
-                    CircleAvatar(child: Text('${widget.jumps.length}')),
-                  ],
+//.Esta caja muestra total de saltos del ultimo dia, los sobrecupos, handycam
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      SizedBox(width: 100, child: Text('Saltos del día ')),
+                      CircleAvatar(child: Text('${widget.jumps.length}')),
+                    ],
+                  ),
                 ),
-              ),
-//. Esta caja muestra los sobrecupos
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
+                Column(
                   children: [
-                    SizedBox(width: 100, child: Text('Sobrecupos ')),
-                    CircleAvatar(child: Text('${widget.sobrecuposDelDia.length}')),
-                  ],
-                ),
-              ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        SizedBox(width: 100, child: Text('Sobrecupos ')),
+                        CircleAvatar(child: Text('${widget.sobrecuposDelDia.length}')),
+                      ],
+                    ),
+                    const SizedBox(height: 10,),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        SizedBox(width: 100, child: Text('Handycams ')),
+                        CircleAvatar(child: Text('${widget.handycams.length}')),
+                      ],
+                    ),
+                    const SizedBox(height: 10,),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        SizedBox(width: 100, child: Text('Moons ')),
+                        CircleAvatar(child: Text('${widget.moonJumps.length}')),
+                      ],
+                    ),
+                  ],)
+              ],),
               const SizedBox(height: 10,),
 //. Esta caja muestra la lista de los saltos del ultimo dia
               SizedBox(
@@ -66,7 +87,7 @@ class _HomeSkydivingState extends State<HomeSkydiving> {
                           final jump = widget.jumps[index];
                           return ListTile(
                             leading: Text('#${index + 1}'),
-                            title: Text(jump.location),
+                          title: Text('${jump.jumpType}${jump.handyCam==1?' with Handycam':''}${jump.altitude>=15000?' at Moon.':''}'),
                             subtitle: Text(
                               '${jump.weight} kg - ${jump.age} años - con ${jump.signature}',
                             ),

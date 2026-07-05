@@ -33,9 +33,9 @@ class _HomeBasejumpState extends State<HomeBasejump> {
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    SizedBox(width: 100, child: Text('Saltos del día de saltos ')),
+                    SizedBox(width: 100, child: Text('Saltos del día ')),
                     CircleAvatar(child: Text('${widget.jumpsBase.length}')),
                   ],
                 ),

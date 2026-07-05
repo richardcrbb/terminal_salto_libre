@@ -8,7 +8,7 @@ import 'package:terminal_salto_libre/data/shared_functions.dart';
 class AddJumpForm extends StatefulWidget {
   
   //data que se recibe de la ruta logbook
-  final int index;
+  final int index; //0 is skydiving, 1 is basejump.
   final JumpLog? existingJump;
   final void Function(JumpLog) onSave;
   
@@ -28,9 +28,7 @@ class _AddJumpFormState extends State<AddJumpForm> {
   //. Variable para saber si esta inicializando la pagina de edicion:
   bool _inicializando = true;
 
-  //. Callbacks de listeners para tenerlos como referencia
-  VoidCallback _freefallDelayListener1 = (){};
-  VoidCallback _freefallDelayListener2 = (){};
+ 
 
   //. Controladores
   final _jumpNumberController = TextEditingController();
@@ -43,6 +41,7 @@ class _AddJumpFormState extends State<AddJumpForm> {
   final _totalFreefallController = TextEditingController();
   final _totalFreefallControllerEdited = TextEditingController();
   final ValueNotifier<String> _jumpTypeNotifier = ValueNotifier('Tandem');
+  bool _handyCamBool = false;
   final _weightController = TextEditingController();
   final _ageController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -69,27 +68,29 @@ class _AddJumpFormState extends State<AddJumpForm> {
       _totalFreefallController.text = jump.totalFreefall.toString();
       _totalFreefallControllerEdited.text = formatSecondsToHHMMSS(jump.totalFreefall!,);
       _jumpTypeNotifier.value = jump.jumpType;
+      _handyCamBool = jump.handyCam==0?false:true;
       _weightController.text = jump.weight?.toString() ?? '';
       _ageController.text = jump.age?.toString() ?? '';
       _descriptionController.text = jump.description;
       _signatureController.text = jump.signature;
 
-       // Asignamos el callback en el listener como una referencia
-      _freefallDelayListener1 = () {
-      if (_inicializando) return;// ✅ evita recalcular en la carga inicial.
-      _actualizarTotalFreefall(
-        baseHistorica: jump.totalFreefall! - jump.freefallDelay,// argumento de funcion, sirve para mantener base histórica, le resta lo que le habia sumado en la primera insercion del salto
-        delay: int.tryParse(_freefallDelayController.text) ?? 0,//argumento de funcion
-      );
-      };
-      
       //Llamamos el callback.
       _freefallDelayController.addListener(_freefallDelayListener1);
+
+      // Asignamos el callback aqui en init porque no se puede antes.
+      _freefallDelayListener1 = () {
+        if (_inicializando) return;// ✅ evita recalcular en la carga inicial.
+        _actualizarTotalFreefall(
+          baseHistorica: jump.totalFreefall! - jump.freefallDelay,// argumento de funcion, sirve para mantener base histórica, le resta lo que le habia sumado en la primera insercion del salto
+          delay: int.tryParse(_freefallDelayController.text) ?? 0,//argumento de funcion
+        );
+      };
 
     } 
     
     //. Valores por defecto skydiving
     else if(widget.index == 0 && widget.existingJump == null){
+      _jumpNumberController.text=(lastJumpNumberNotifier.value+1).toString();
       _dateController.text = _dateFormat.format(_selectedDate);
       _locationController.text = "SD Toronto";
       _aircraftController.text = "Caravan";
@@ -104,12 +105,13 @@ class _AddJumpFormState extends State<AddJumpForm> {
       _calcularTotalFreefall(); //esta funcion evalua el totalfreefall y lo asigna a su respectivo controller teniendo en cuenta el notifier de totalfreefall
 
 
-      // Asignamos el callback
+      // Llamamos el callback del listener2
+      _freefallDelayController.addListener(_freefallDelayListener2);
+
+      // Asignamos el callback que ya esta declarado.
       _freefallDelayListener2 = () {
       _calcularTotalFreefall();//esta funcion escucha cambios en el delay y recalcula el totalfreefall y lo reasigna al controller teniendo en cuenta el notifier de totalfreefall
       };
-      // Llamamos el callback del listener2
-      _freefallDelayController.addListener(_freefallDelayListener2);
     }
 
     //. Controladores iniciales si es un salto existente en basejump
@@ -129,12 +131,16 @@ class _AddJumpFormState extends State<AddJumpForm> {
       _totalFreefallController.text = jump.totalFreefall.toString();
       _totalFreefallControllerEdited.text = formatSecondsToHHMMSS(jump.totalFreefall!,);
       _jumpTypeNotifier.value = jump.jumpType;
+      _handyCamBool = jump.handyCam==0?false:true;
       _weightController.text = jump.weight?.toString() ?? '';
       _ageController.text = jump.age?.toString() ?? '';
       _descriptionController.text = jump.description;
       _signatureController.text = jump.signature;
 
-      // Guardamos el listener como una referencia
+      //Llamamos el listener
+      _freefallDelayController.addListener(_freefallDelayListener1);
+
+      // Asignamos el callback que ya esta declarado en la clase.
       _freefallDelayListener1 = () {
         if (_inicializando) return;
         _actualizarTotalFreefall(
@@ -142,13 +148,12 @@ class _AddJumpFormState extends State<AddJumpForm> {
           delay: int.tryParse(_freefallDelayController.text) ?? 0,
         );
       };
-      //Llamamos el listener
-      _freefallDelayController.addListener(_freefallDelayListener1);
 
     }
     
     //. Valores por defecto en BaseJump
     else if(widget.index == 1 && widget.existingJump == null){
+      _jumpNumberController.text=(lastJumpNumberBaseNotifier.value+1).toString();
       _dateController.text = _dateFormat.format(_selectedDate);
       _locationController.text = "Linea";
       _aircraftController.text = "B.A.S.E";
@@ -162,12 +167,13 @@ class _AddJumpFormState extends State<AddJumpForm> {
       
       _calcularTotalFreefall(); //esta funcion evalua el totalfreefall y lo asigna a su respectivo controller teniendo en cuenta el notifier de totalfreefall
 
+      //llamamos al callback del listener
+      _freefallDelayController.addListener(_freefallDelayListener2);
+
       //Asignamos el callback
       _freefallDelayListener2 = () {
       _calcularTotalFreefall();
       };
-      //llamamos al callback del listener
-      _freefallDelayController.addListener(_freefallDelayListener2);
     } 
 
      
@@ -262,8 +268,9 @@ class _AddJumpFormState extends State<AddJumpForm> {
         freefallDelay: int.parse(_freefallDelayController.text),
         totalFreefall: int.parse(_totalFreefallController.text),
         jumpType: _jumpTypeNotifier.value,
+        handyCam: _handyCamBool? 1:0,
         weight: int.tryParse(_weightController.text),
-        age: int.tryParse(_ageController.text),
+        age: int.tryParse(_ageController.text) ?? 0,
         description: _descriptionController.text,
         signature: _signatureController.text,
       );
@@ -298,70 +305,87 @@ class _AddJumpFormState extends State<AddJumpForm> {
             children: [
 //. Tipo de deporte.                            
               Text(widget.index ==0?'SKYDIVING':'BASEJUMP',style: subtitulo,textAlign: TextAlign.center,),
+              Row(children: [
+                TextButton(onPressed: () {_aircraftController.text='Caravan';} , child: Text('Caravan')),
+                TextButton(onPressed: () {_aircraftController.text='C-182';} , child: Text('C-182')),
+                TextButton(onPressed: () {_altitudeController.text='9000';_freefallDelayController.text='25';} , child: Text('9k')),
+                TextButton(onPressed: () {_altitudeController.text='12000';_freefallDelayController.text='45';} , child: Text('12k')),
+                TextButton(onPressed: () {_altitudeController.text='15000';_freefallDelayController.text='55';} , child: Text('15k')),
+              ],),
+              Row(children: [
 //. Numero de salto.              
-              ValueListenableBuilder<int>(
-                valueListenable: widget.index ==0 ? lastJumpNumberNotifier : lastJumpNumberBaseNotifier,
-                builder:
-                    (BuildContext context, int ultimoSalto, Widget? child) {
-                      if (widget.existingJump == null) {
-                        _jumpNumberController.text = (ultimoSalto + 1)
-                            .toString();
-                      } // asigna numero de salto, solo si un salto nuevo
-                      return TextFormField(
-                        controller: _jumpNumberController,
-                        readOnly: true, // Si es un salto editado al cargar datos de ruta se asigna el numero de salto.
-                        decoration: const InputDecoration(
-                          labelText: 'Número de salto',
-                        ),
-                        validator: (value) =>
-                            value!.isEmpty ? 'Requerido' : null,
-                      );
-                    },
-              ),
+                Flexible(
+                  child: TextFormField(
+                    controller: _jumpNumberController,
+                    readOnly: true, // Si es un salto editado al cargar datos de ruta se asigna el numero de salto.
+                    decoration: const InputDecoration(labelText: 'Número de salto',),
+                    validator: (value) => value!.isEmpty ? 'Requerido' : null,
+                  ),
+                ),
 //. Fecha.
-              TextFormField(
-                controller: _dateController,
-                decoration: InputDecoration(
-                  labelText: _dateController.text == _dateFormat.format(DateTime.now()) ? 'Hoy' : 'Fecha',
-                  suffixIcon: Icon(Icons.calendar_today_outlined),
+                Flexible(
+                  child: TextFormField(
+                    controller: _dateController,
+                    decoration: InputDecoration(
+                      labelText: _dateController.text == _dateFormat.format(DateTime.now()) ? 'Hoy' : 'Fecha',
+                      suffixIcon: Icon(Icons.calendar_today_outlined),
+                    ),
+                    readOnly: true,
+                    onTap: _selectDate,
+                    validator: (value) => value!.isEmpty ? 'Requerido' : null,
+                  ),
                 ),
-                readOnly: true,
-                onTap: _selectDate,
-                validator: (value) => value!.isEmpty ? 'Requerido' : null,
-              ),
+              ],),
+              Row(
+                children: [
 //. Lugar.
-              TextFormField(
-                controller: _locationController,
-                decoration: const InputDecoration(labelText: 'Lugar'),
-                validator: (value) => value!.isEmpty ? 'Requerido' : null,
-              ),
+                  Flexible(
+                    child: TextFormField(
+                      controller: _locationController,
+                      decoration: const InputDecoration(labelText: 'Lugar'),
+                      validator: (value) => value!.isEmpty ? 'Requerido' : null,
+                    ),
+                  ),
 //. Aeronave.              
-              TextFormField(
-                controller: _aircraftController,
-                decoration: const InputDecoration(labelText: 'Aeronave'),
-                validator: (value) => value!.isEmpty ? 'Requerido' : null,
-              ),
+                  Flexible(
+                    child: TextFormField(
+                      controller: _aircraftController,
+                      decoration: const InputDecoration(labelText: 'Aeronave'),
+                      validator: (value) => value!.isEmpty ? 'Requerido' : null,
+                    ),
+                  ),
+                ],),
+              Row(
+                children: [
 //. Equipo.              
-              TextFormField(
-                controller: _equipmentController,
-                decoration: const InputDecoration(labelText: 'Equipo'),
-                validator: (value) => value!.isEmpty ? 'Requerido' : null,
-              ),
+                  Flexible(
+                    child: TextFormField(
+                      controller: _equipmentController,
+                      decoration: const InputDecoration(labelText: 'Equipo'),
+                      validator: (value) => value!.isEmpty ? 'Requerido' : null,
+                    ),
+                  ),
 //. Altitud.              
-              TextFormField(
-                controller: _altitudeController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Altitud (pies)'),
-                validator: (value) => value!.isEmpty ? 'Requerido' : null,
-              ),
+                  Flexible(
+                    child: TextFormField(
+                      controller: _altitudeController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(labelText: 'Altitud (pies)'),
+                      validator: (value) => value!.isEmpty ? 'Requerido' : null,
+                    ),
+                  ),
 //. Delay.              
-              TextFormField(
-                controller: _freefallDelayController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Retardo (segundos)',
-                ),
-                validator: (value) => value!.isEmpty ? 'Requerido' : null,
+                  Flexible(
+                    child: TextFormField(
+                      controller: _freefallDelayController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Retardo (segundos)',
+                      ),
+                      validator: (value) => value!.isEmpty ? 'Requerido' : null,
+                    ),
+                  ),
+                ],
               ),
 //. TotalFreefall.              
               TextFormField(
@@ -374,22 +398,40 @@ class _AddJumpFormState extends State<AddJumpForm> {
                 validator: (value) => value!.isEmpty ? 'Requerido' : null,
               ),
 //. Tipo/Categoria.              
-              ValueListenableBuilder(
-                valueListenable: _jumpTypeNotifier,
-                builder: (BuildContext context, String jumpT, Widget? child) {
-                  return DropdownButtonFormField(
-                    initialValue: jumpT,
-                    onChanged: (newValue) {
-                      _jumpTypeNotifier.value = newValue!;
-                    },
-                    items: widget.index == 0 
-                      ? jumpTypeList.map((String item) {
-                        return DropdownMenuItem(value: item, child: Text(item));}).toList()
-                      : jumpTypeListInBase.map((String item) {
-                        return DropdownMenuItem(value: item, child: Text(item));}).toList(),
-                    decoration: InputDecoration(labelText: 'Jump Type'),
-                  );
-                },
+              Row(
+                children: [
+                  ValueListenableBuilder(
+                  valueListenable: _jumpTypeNotifier,
+                  builder: (BuildContext context, String jumpT, Widget? child) {
+                    return Flexible(
+                      child: DropdownButtonFormField(
+                        initialValue: jumpT,
+                        onChanged: (newValue) {
+                          _jumpTypeNotifier.value = newValue!;
+                        },
+                        items: widget.index == 0 
+                          ? jumpTypeList.map((String item) {
+                            return DropdownMenuItem(value: item, child: Text(item));}).toList()
+                          : jumpTypeListInBase.map((String item) {
+                            return DropdownMenuItem(value: item, child: Text(item));}).toList(),
+                        decoration: InputDecoration(labelText: 'Jump Type'),
+                      ),
+                    );
+                  },
+                  ),
+                  Flexible(
+                  child: Card(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12),side: BorderSide(width: 5)),
+                    child: 
+                      SwitchListTile.adaptive(
+                        title: Text('HC?'),
+                        value: _handyCamBool,
+                        onChanged: (isHandyCam) => setState((){_handyCamBool=isHandyCam;}),
+                        visualDensity: VisualDensity.compact,
+                      ),)
+                ),
+
+                ],
               ),
 //. Peso.              
               Row(children: [
@@ -408,12 +450,18 @@ class _AddJumpFormState extends State<AddJumpForm> {
                   child: Text('↑↓ Convert Lbs to Kg'),
                 ),
               ],),
-//. Edad.              
-              TextFormField(
-                controller: _ageController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Edad'),
-              ),
+//. Edad y HandyCam.              
+              Row(children: [
+                Expanded(
+                  flex: 5,
+                  child: TextFormField(
+                    controller: _ageController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: 'Edad'),
+                  ),
+                ),
+                
+              ],),
 //. Descripcion.              
               TextFormField(
                 controller: _descriptionController,
@@ -439,4 +487,13 @@ class _AddJumpFormState extends State<AddJumpForm> {
       ),
     );
   }
+
+  //!                           CALLBACKS
+
+
+   //. Callbacks de listeners para tenerlos como referencia
+  VoidCallback _freefallDelayListener1 = (){};
+  VoidCallback _freefallDelayListener2 = (){};
+
+  
 }

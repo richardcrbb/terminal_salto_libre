@@ -15,6 +15,7 @@ class JumpLog {
   final int freefallDelay;
   final int? totalFreefall;
   final String jumpType;
+  final int handyCam;
   final int? weight;
   final int? age;
   final String description;
@@ -31,6 +32,7 @@ class JumpLog {
     required this.altitude,
     required this.freefallDelay,
     required this.jumpType,
+    required this.handyCam,
     this.weight,
     this.age,
     this.totalFreefall,
@@ -51,6 +53,7 @@ class JumpLog {
       'freefallDelay': freefallDelay,
       'totalFreefall': totalFreefall,
       'jumpType': jumpType,
+      'handyCam': handyCam,
       'weight': weight,
       'age' : age,
       'description': description,
@@ -67,15 +70,16 @@ class JumpLog {
       location: map['location'],
       aircraft: map['aircraft'],
       equipment: map['equipment'],
-      altitude: map['altitude'],
+      altitude: map['altitude'].toInt(),
       freefallDelay: map['freefallDelay'],
       totalFreefall: map['totalFreefall'],
       jumpType: map['jumpType'],
+      handyCam: map['handyCam']  ?? 0,
       weight: map['weight'],
       age : map['age'],
       description: map['description'],
       signature: map['signature'],
-      favorites: map['favorites'],
+      favorites: map['favorites'].toInt(),
     );
   }
 }
@@ -129,7 +133,7 @@ class SettingsSkydivingLog{
   
 }
 
-//#   Clase SettingsBasejumpLog                                                                                                        
+//!   Clase SettingsBasejumpLog                                                                                                        
 
  class SettingsBasejumpLog {
   int previousJumps;
@@ -179,7 +183,7 @@ class SettingsSkydivingLog{
   }
  }
 
-//$       ListTile de ruta Logbook                                                                                                                    
+//!       ListTile de ruta Logbook                                                                                                                    
 
 class ListTileOfLogbook{
   JumpLog jump;
@@ -189,7 +193,7 @@ class ListTileOfLogbook{
   CircleAvatar leading () {return CircleAvatar(child: Text('${jump.jumpNumber}'));}
   
   Text title () {return Text(
-    '${jump.jumpType} en ${jump.location} el ${formatearFecha(jump.date)}',
+    '${jump.jumpType}${jump.handyCam==1? " with HC ":""} en ${jump.location} el ${formatearFecha(jump.date)}',
     );}
 
   Text subtitle () { return Text(
@@ -224,6 +228,8 @@ class ListTileOfLogbook{
             SizedBox(height: 10,),
             Row(children: [SizedBox(width: spacer, child: Text('Jump Type:')),SizedBox(child: Text(jump.jumpType),),],),
             SizedBox(height: 10,),
+            Row(children: [SizedBox(width: spacer, child: Text('HandyCam:')),SizedBox(child: Text(jump.handyCam==1? " with HC.":"No"),),],),
+            SizedBox(height: 10,),
             Row(children: [SizedBox(width: spacer, child: Text('Weight:')),SizedBox(child: Text('${jump.weight}'),),],),
             SizedBox(height: 10,),
             Row(children: [SizedBox(width: spacer, child: Text('Age:')),SizedBox(child: Text('${jump.age}'),),],),
@@ -243,7 +249,7 @@ class ListTileOfLogbook{
   }
 }
 
-//$       Tipo de deporte                                                                                                                                     
+//!       Tipo de deporte                                                                                                                                     
 enum Deporte {
   skydiving,
   basejump,
@@ -259,7 +265,7 @@ const List<String> jumpTypeList = [
   'Fun Jump',
 ];
 
-//#      Listado de tipo de salto en BASEJUMP.                                                                                                    
+//!      Listado de tipo de salto en BASEJUMP.                                                                                                    
 const List<String> jumpTypeListInBase = [
   'Asisted',
   'Belly',

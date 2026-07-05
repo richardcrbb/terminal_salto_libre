@@ -61,13 +61,17 @@ class _HomePageState extends State<HomePage> {
         final sobrecuposDelDia = jumps
             .where((jump) => (jump.weight ?? 0) > 85)
             .toList();
+        final handycams=jumps
+            .where((jump) => jump.handyCam==1,)
+            .toList();
+        final moonJumps=jumps.where((jump)=>jump.altitude>=15000,).toList();
         
         return DefaultTabController(length: 2, child: Scaffold(
           body: Column(children: [
             TabBar(unselectedLabelColor: Colors.grey,tabs: [Tab(text: "Skydiving",),Tab(text: "Basejump",)]),
             Expanded(
               child: TabBarView(children: [
-                HomeSkydiving(jumps: jumps, favList: favList, counts: counts,sobrecuposDelDia: sobrecuposDelDia,),
+                HomeSkydiving(jumps: jumps, favList: favList, counts: counts,sobrecuposDelDia: sobrecuposDelDia,handycams: handycams,moonJumps: moonJumps,),
                 HomeBasejump(jumpsBase: jumpsBase, favListBase: favListBase, countsBase: countsBase,),
                 ]),
             ),
