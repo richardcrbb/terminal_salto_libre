@@ -305,12 +305,28 @@ class _AddJumpFormState extends State<AddJumpForm> {
             children: [
 //. Tipo de deporte.                            
               Text(widget.index ==0?'SKYDIVING':'BASEJUMP',style: subtitulo,textAlign: TextAlign.center,),
+//. Botones de llenado de informacion rapido.              
               Row(children: [
-                TextButton(onPressed: () {_aircraftController.text='Caravan';} , child: Text('Caravan')),
-                TextButton(onPressed: () {_aircraftController.text='C-182';} , child: Text('C-182')),
-                TextButton(onPressed: () {_altitudeController.text='9000';_freefallDelayController.text='25';} , child: Text('9k')),
-                TextButton(onPressed: () {_altitudeController.text='12000';_freefallDelayController.text='45';} , child: Text('12k')),
-                TextButton(onPressed: () {_altitudeController.text='15000';_freefallDelayController.text='55';} , child: Text('15k')),
+                TextButton(
+                  style: _aircraftController.text=='Caravan'? null:buttonStyleNotSelected,
+                  onPressed: () => setState((){_aircraftController.text='Caravan';}),
+                  child: Text('Caravan')),
+                TextButton(
+                  style: _aircraftController.text=='C-182'? null:buttonStyleNotSelected,
+                  onPressed: () => setState((){_aircraftController.text='C-182';}),
+                  child: Text('C-182')),
+                TextButton(
+                  style: _altitudeController.text=='9000'? null:buttonStyleNotSelected,
+                  onPressed: () => setState((){_altitudeController.text='9000';_freefallDelayController.text='25';}),
+                  child: Text('9k')),
+                TextButton(
+                  style: _altitudeController.text=='12000'? null:buttonStyleNotSelected,
+                  onPressed: () => setState((){_altitudeController.text='12000';_freefallDelayController.text='45';}),
+                  child: Text('12k')),
+                TextButton(
+                  style: _altitudeController.text=='15000'? null:buttonStyleNotSelected,
+                  onPressed: () => setState((){_altitudeController.text='15000';_freefallDelayController.text='55';}),
+                  child: Text('15k')),
               ],),
               Row(children: [
 //. Numero de salto.              

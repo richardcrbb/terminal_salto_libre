@@ -320,3 +320,9 @@ const TextStyle subtitulo = TextStyle(fontSize: 18, color: Colors.white70);
     }
   }
 
+
+
+//!                           Formato de boton.
+
+ButtonStyle buttonStyleNotSelected = ButtonStyle(foregroundColor: WidgetStatePropertyAll(Colors.white));
+
